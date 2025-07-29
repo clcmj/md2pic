@@ -21,11 +21,52 @@ interface LayoutConfig {
 }
 
 export function parseMarkdownToElements(markdown: string, layoutConfig?: LayoutConfig): MarkdownElement[] {
+  // 先用临时配置解析元素，估算总高度
+  const tempTokens = marked.lexer(markdown) as ParsedToken[];
+  
+  // 估算内容总高度（使用较大的行间距进行初步计算）
+  let estimatedHeight = 200; // 起始边距
+  tempTokens.forEach(token => {
+    switch (token.type) {
+      case 'heading':
+        const level = token.depth || 1;
+        const fontSize = level === 1 ? 72 : level === 2 ? 56 : 44;
+        estimatedHeight += fontSize * 1.8 + 60; // 估算标题高度
+        break;
+      case 'paragraph':
+        estimatedHeight += 32 * 1.8 + 40; // 估算段落高度
+        break;
+      case 'list':
+        const items = token.items?.length || 1;
+        estimatedHeight += items * 28 * 1.5 + 40; // 估算列表高度
+        break;
+      default:
+        estimatedHeight += 60; // 其他元素的默认高度
+    }
+  });
+  
+  // 根据内容密度动态调整行间距
+  const canvasHeight = 1440;
+  const contentDensity = estimatedHeight / canvasHeight;
+  
+  let dynamicLineSpacing;
+  if (contentDensity > 1.5) {
+    dynamicLineSpacing = 15; // 内容非常密集
+  } else if (contentDensity > 1.2) {
+    dynamicLineSpacing = 25; // 内容很密集
+  } else if (contentDensity > 1.0) {
+    dynamicLineSpacing = 35; // 内容较密集
+  } else if (contentDensity > 0.7) {
+    dynamicLineSpacing = 45; // 内容适中
+  } else {
+    dynamicLineSpacing = 55; // 内容较少，可以用大行间距
+  }
+  
   const config = layoutConfig || {
     canvasWidth: 1080,
     canvasHeight: 1440,
-    padding: 60, // 适当减少边距，为大字体留出更多空间
-    lineSpacing: 50 // 增加行间距，适配大字体
+    padding: 100, // 增加上下左右边距，防止大字体超出
+    lineSpacing: dynamicLineSpacing // 智能动态行间距
   };
   
   const tokens = marked.lexer(markdown) as ParsedToken[];
@@ -36,19 +77,39 @@ export function parseMarkdownToElements(markdown: string, layoutConfig?: LayoutC
   let yOffset = config.padding;
   
   tokens.forEach((token, index) => {
-    const element = createElementFromToken(token, index, yOffset, config, contentWidth);
+    const element = createElementFromToken(token, index, yOffset, config, contentWidth, contentDensity);
     if (element) {
       elements.push(element);
       yOffset += element.height + config.lineSpacing;
     }
   });
   
-  // 如果内容总高度小于画布高度，垂直居中
+  // 如果内容总高度小于画布高度，垂直居中（但保持最小边距）
   const totalHeight = yOffset - config.lineSpacing + config.padding;
+  const finalContentDensity = totalHeight / config.canvasHeight;
+  
   if (totalHeight < config.canvasHeight) {
-    const verticalOffset = (config.canvasHeight - totalHeight) / 2;
+    const availableSpace = config.canvasHeight - totalHeight;
+    
+    // 根据内容密度决定居中策略
+    let verticalOffset;
+    if (finalContentDensity > 0.9) {
+      // 内容很密集时，只保持最小顶部边距，不强制居中
+      verticalOffset = Math.max(0, config.padding * 0.5);
+    } else if (finalContentDensity > 0.7) {
+      // 内容较密集时，轻微居中
+      verticalOffset = Math.max(availableSpace * 0.3, config.padding * 0.7);
+    } else {
+      // 内容较少时，正常居中
+      verticalOffset = Math.max(availableSpace / 2, config.padding);
+    }
+    
+    // 确保不会超出底部边界
+    const maxOffset = config.canvasHeight - totalHeight - config.padding * 0.5;
+    const safeOffset = Math.min(verticalOffset, Math.max(0, maxOffset));
+    
     elements.forEach(element => {
-      element.y += verticalOffset;
+      element.y += safeOffset;
     });
   }
   
@@ -60,15 +121,19 @@ function createElementFromToken(
   index: number, 
   yOffset: number, 
   config: LayoutConfig,
-  contentWidth: number
+  contentWidth: number,
+  contentDensity: number
 ): MarkdownElement | null {
   const id = `element-${index}-${Date.now()}`;
+  // 根据内容密度调整基础字体大小
+  const baseFontSize = contentDensity > 1.2 ? 28 : contentDensity > 1.0 ? 30 : 32;
+  
   const baseElement = {
     id,
     x: config.padding, // 左对齐到内容区域
     y: yOffset,
     width: contentWidth, // 使用完整内容宽度
-    fontSize: 32, // 大幅增大默认字体，适合小红书展示
+    fontSize: baseFontSize, // 根据内容密度调整字体大小
     color: '#1f2937',
     textAlign: 'center' as const, // 文字居中
   };
@@ -76,8 +141,14 @@ function createElementFromToken(
   switch (token.type) {
     case 'heading':
       const headingLevel = token.depth || 1;
-      // 大幅增大标题字体大小，适合小红书视觉冲击
-      const headingFontSize = headingLevel === 1 ? 72 : headingLevel === 2 ? 56 : 44;
+      // 根据内容密度动态调整标题字体大小
+      let h1Size = 72, h2Size = 56, h3Size = 44;
+      if (contentDensity > 1.2) {
+        h1Size = 60; h2Size = 48; h3Size = 36; // 内容很密集时减小标题
+      } else if (contentDensity > 1.0) {
+        h1Size = 66; h2Size = 52; h3Size = 40; // 内容较密集时稍微减小
+      }
+      const headingFontSize = headingLevel === 1 ? h1Size : headingLevel === 2 ? h2Size : h3Size;
       const headingColor = getHeadingColor(headingLevel);
       
       return {
@@ -180,7 +251,11 @@ function cleanMarkdownText(text: string): string {
 function calculateTextHeight(text: string, fontSize: number): number {
   const lines = text.split('\n').length;
   const lineHeight = fontSize * 1.8; // 进一步增加行高，适合大字体
-  return Math.max(lines * lineHeight + 50, 80); // 增加最小高度，确保大字体有足够空间
+  
+  // 为大字体提供额外的垂直空间
+  const extraPadding = fontSize > 50 ? 80 : fontSize > 30 ? 60 : 40;
+  
+  return Math.max(lines * lineHeight + extraPadding, 80); // 根据字体大小动态调整最小高度
 }
 
 function calculateTableHeight(token: ParsedToken): number {

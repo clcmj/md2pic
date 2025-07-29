@@ -254,7 +254,7 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
       color: element.color,
       backgroundColor: element.backgroundColor || 'transparent',
       textAlign: element.textAlign,
-      padding: '8px',
+      padding: '12px',
       border: isSelected ? '2px solid #3b82f6' : '1px solid transparent',
       borderRadius: '4px',
       cursor: dragState?.isDragging ? 'grabbing' : 'grab',
