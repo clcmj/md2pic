@@ -6,6 +6,7 @@ import { CanvasFormatPanel } from '../components/CanvasFormatPanel';
 import { ExportPanel } from '../components/ExportPanel';
 import { PageSplitPanel } from '../components/PageSplitPanel';
 import { ElementEditPanel } from '../components/ElementEditPanel';
+import { BackgroundPanel } from '../components/BackgroundPanel';
 import { useAppStore } from '../store/useAppStore';
 import { parseMarkdownToElements } from '../lib/markdownParser';
 import { FileText, Palette, Download, Settings } from 'lucide-react';
@@ -137,17 +138,23 @@ export function Editor() {
                 </div>
               </div>
               
-              {/* Page Split Panel */}
-              <PageSplitPanel />
-              
-              {/* Canvas Format Panel */}
-              <CanvasFormatPanel />
-              
-              {/* Export Panel */}
-              <ExportPanel />
-              
-              {/* Style Panel */}
-              <StylePanel className="flex-1" />
+              {/* Scrollable content area */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Page Split Panel */}
+                <PageSplitPanel />
+                
+                {/* Background Panel */}
+                <BackgroundPanel />
+                
+                {/* Canvas Format Panel */}
+                <CanvasFormatPanel />
+                
+                {/* Export Panel */}
+                <ExportPanel />
+                
+                {/* Style Panel */}
+                <StylePanel />
+              </div>
             </>
           )}
         </div>

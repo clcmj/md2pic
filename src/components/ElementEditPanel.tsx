@@ -67,7 +67,8 @@ export function ElementEditPanel() {
   // 字体大小调整
   const handleFontSizeChange = useCallback((delta: number) => {
     if (selectedElement) {
-      const newFontSize = Math.max(8, Math.min(72, selectedElement.fontSize + delta));
+      const currentFontSize = selectedElement.fontSize;
+      const newFontSize = Math.max(8, Math.min(120, currentFontSize + delta)); // 增加最大字体到120px
       updateCurrentPageElement(selectedElement.id, { fontSize: newFontSize });
     }
   }, [selectedElement, updateCurrentPageElement]);

@@ -21,6 +21,18 @@ interface CanvasFormat {
   width: number;
   height: number;
   description: string;
+  backgroundColor?: string;
+  backgroundType?: 'solid' | 'gradient';
+  gradientDirection?: string;
+  gradientColors?: string[];
+}
+
+interface BackgroundSettings {
+  type: 'solid' | 'gradient';
+  solidColor: string;
+  gradientType: 'linear' | 'radial';
+  gradientDirection: string;
+  gradientColors: string[];
 }
 
 interface StyleSettings {
@@ -59,6 +71,10 @@ interface AppState {
   styleSettings: StyleSettings;
   updateStyleSettings: (updates: Partial<StyleSettings>) => void;
   
+  // Background settings
+  backgroundSettings: BackgroundSettings;
+  updateBackgroundSettings: (updates: Partial<BackgroundSettings>) => void;
+  
   // Pages
   currentPage: number;
   totalPages: number;
@@ -84,26 +100,30 @@ interface AppState {
 
 const defaultCanvasFormats: CanvasFormat[] = [
   { name: '小红书', width: 1080, height: 1440, description: '1080×1440' },
-  { name: '微博', width: 1080, height: 1080, description: '1080×1080' },
-  { name: '朋友圈', width: 1080, height: 1260, description: '1080×1260' },
-  { name: 'Instagram', width: 1080, height: 1080, description: '1080×1080' },
-  { name: 'Twitter', width: 1200, height: 675, description: '1200×675' },
 ];
 
 const defaultStyleSettings: StyleSettings = {
   theme: 'blue',
-  globalFontSize: 24, // 增大默认字体
+  globalFontSize: 32, // 大字体，适合视觉展示
   lineHeight: 'normal',
   textAlign: 'center', // 默认居中对齐
-  h1Color: '#2563eb',
-  h2Color: '#059669',
-  h3Color: '#ea580c',
-  boldColor: '#7c3aed',
+  h1Color: '#2563eb', // 蓝色系主色
+  h2Color: '#93c5fd', // 蓝色系辅色
+  h3Color: '#ea580c', // 保持橙色
+  boldColor: '#7c3aed', // 保持紫色
+};
+
+const defaultBackgroundSettings: BackgroundSettings = {
+  type: 'solid',
+  solidColor: '#ffffff',
+  gradientType: 'linear',
+  gradientDirection: 'to bottom',
+  gradientColors: ['#f8fafc', '#e2e8f0']
 };
 
 export const useAppStore = create<AppState>((set, get) => ({
   // Markdown content
-  markdownContent: '# 欢迎使用 md2pic\n\n**Markdown 转图片工具**\n\n让文字变得更美\n\n## 核心功能\n\n实时预览与编辑\n\n拖拽式布局调整\n\n多种精美样式\n\n一键导出高清图片\n\n## 智能分页\n\nH1分割：章节级分页\n\nH2分割：小节级分页\n\n自动布局优化\n\n# 功能特点\n\n专业的排版效果\n\n## 编辑体验\n\n点击元素即可编辑\n\n右侧面板全功能控制\n\n支持字体、颜色、对齐\n\n拖拽移动和缩放\n\n## 导出功能\n\n支持PNG、JPEG、WebP格式\n\n批量导出多页内容\n\n高分辨率输出\n\n# 使用指南\n\n简单易用的界面\n\n## 快速开始\n\n1. 编辑左侧Markdown内容\n2. 在中间画布预览效果\n3. 使用右侧面板调整样式\n4. 点击导出下载图片\n\n## 高级功能\n\n支持表格、代码块\n\n自定义样式主题\n\n响应式布局设计',
+  markdownContent: '# ✨ 超实用工具分享\n\n**Markdown转图片神器**\n\n让你的文字瞬间变美！\n\n## 🔥 核心亮点\n\n**一键生成精美图片**\n\n完美适配小红书尺寸\n\n**拖拽式自由布局**\n\n想怎么排就怎么排\n\n## 💡 使用场景\n\n📚 **学习笔记**\n做出颜值超高的知识卡片\n\n💼 **工作汇报**\n让PPT告别单调文字\n\n🎨 **创意分享**\n把想法变成视觉作品\n\n# 🎯 三步搞定\n\n## 第一步：输入内容\n在左侧编辑你的文字\n\n## 第二步：调整样式\n右侧面板一键美化\n\n## 第三步：导出分享\n高清图片立即下载\n\n**简单到爆！小白也能用！**',
   setMarkdownContent: (content) => set({ markdownContent: content }),
   
   // Parsed elements
@@ -140,6 +160,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   styleSettings: defaultStyleSettings,
   updateStyleSettings: (updates) => set(state => ({
     styleSettings: { ...state.styleSettings, ...updates }
+  })),
+  
+  // Background settings
+  backgroundSettings: defaultBackgroundSettings,
+  updateBackgroundSettings: (updates) => set(state => ({
+    backgroundSettings: { ...state.backgroundSettings, ...updates }
   })),
   
   // Pages
@@ -211,4 +237,4 @@ export const useAppStore = create<AppState>((set, get) => ({
 }));
 
 export { defaultCanvasFormats };
-export type { MarkdownElement, CanvasFormat, StyleSettings };
+export type { MarkdownElement, CanvasFormat, StyleSettings, BackgroundSettings };

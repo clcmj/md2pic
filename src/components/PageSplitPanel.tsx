@@ -9,8 +9,6 @@ interface PageSplitPanelProps {
 
 export function PageSplitPanel({ className = '' }: PageSplitPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [splitLevel, setSplitLevel] = useState<1 | 2 | 3>(1);
-  const [autoSplit, setAutoSplit] = useState(false);
   
   const {
     markdownContent,
@@ -19,7 +17,11 @@ export function PageSplitPanel({ className = '' }: PageSplitPanelProps) {
     totalPages,
     setCurrentPage,
     setTotalPages,
-    setPages
+    setPages,
+    splitLevel,
+    setSplitLevel,
+    autoSplit,
+    setAutoSplit
   } = useAppStore();
 
   const handleSplitByHeadings = () => {

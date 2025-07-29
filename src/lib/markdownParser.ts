@@ -24,8 +24,8 @@ export function parseMarkdownToElements(markdown: string, layoutConfig?: LayoutC
   const config = layoutConfig || {
     canvasWidth: 1080,
     canvasHeight: 1440,
-    padding: 80, // 增加边距
-    lineSpacing: 40 // 增加行间距
+    padding: 60, // 适当减少边距，为大字体留出更多空间
+    lineSpacing: 50 // 增加行间距，适配大字体
   };
   
   const tokens = marked.lexer(markdown) as ParsedToken[];
@@ -68,7 +68,7 @@ function createElementFromToken(
     x: config.padding, // 左对齐到内容区域
     y: yOffset,
     width: contentWidth, // 使用完整内容宽度
-    fontSize: 24, // 增大默认字体
+    fontSize: 32, // 大幅增大默认字体，适合小红书展示
     color: '#1f2937',
     textAlign: 'center' as const, // 文字居中
   };
@@ -76,8 +76,8 @@ function createElementFromToken(
   switch (token.type) {
     case 'heading':
       const headingLevel = token.depth || 1;
-      // 增大标题字体大小
-      const headingFontSize = headingLevel === 1 ? 48 : headingLevel === 2 ? 36 : 28;
+      // 大幅增大标题字体大小，适合小红书视觉冲击
+      const headingFontSize = headingLevel === 1 ? 72 : headingLevel === 2 ? 56 : 44;
       const headingColor = getHeadingColor(headingLevel);
       
       return {
@@ -100,7 +100,7 @@ function createElementFromToken(
         content: cleanMarkdownText(content),
         height: calculateTextHeight(content, baseElement.fontSize),
         fontSize: baseElement.fontSize, // 使用更大的字体
-        color: isBold ? '#7c3aed' : '#1f2937',
+        color: isBold ? '#ec4899' : '#1f2937', // 用粉色突出加粗文字，更适合小红书
       };
       
     case 'list':
@@ -112,8 +112,8 @@ function createElementFromToken(
         ...baseElement,
         type: 'list',
         content: listContent,
-        height: calculateTextHeight(listContent, 22), // 列表稍小一点
-        fontSize: 22,
+        height: calculateTextHeight(listContent, 28), // 增大列表字体
+        fontSize: 28,
         textAlign: 'left' as const, // 列表保持左对齐
       };
       
@@ -122,8 +122,8 @@ function createElementFromToken(
         ...baseElement,
         type: 'blockquote',
         content: cleanMarkdownText(token.text || ''),
-        height: calculateTextHeight(token.text || '', 20),
-        fontSize: 20,
+        height: calculateTextHeight(token.text || '', 26),
+        fontSize: 26,
         backgroundColor: '#f3f4f6',
         color: '#6b7280',
         textAlign: 'left' as const, // 引用保持左对齐
@@ -134,8 +134,8 @@ function createElementFromToken(
         ...baseElement,
         type: 'code',
         content: token.text || '',
-        height: calculateTextHeight(token.text || '', 18),
-        fontSize: 18,
+        height: calculateTextHeight(token.text || '', 24),
+        fontSize: 24,
         backgroundColor: '#1f2937',
         color: '#f9fafb',
         textAlign: 'left' as const, // 代码保持左对齐
@@ -148,7 +148,7 @@ function createElementFromToken(
         type: 'table',
         content: tableContent,
         height: calculateTableHeight(token),
-        fontSize: 18,
+        fontSize: 24,
         textAlign: 'center' as const,
       };
       
@@ -159,9 +159,9 @@ function createElementFromToken(
 
 function getHeadingColor(level: number): string {
   switch (level) {
-    case 1: return '#2563eb';
-    case 2: return '#059669';
-    case 3: return '#ea580c';
+    case 1: return '#dc2626'; // 醒目的红色，适合小红书
+    case 2: return '#7c3aed'; // 紫色，时尚感
+    case 3: return '#ea580c'; // 橙色，温暖感
     default: return '#1f2937';
   }
 }
@@ -179,15 +179,15 @@ function cleanMarkdownText(text: string): string {
 
 function calculateTextHeight(text: string, fontSize: number): number {
   const lines = text.split('\n').length;
-  const lineHeight = fontSize * 1.6; // 增加行高
-  return Math.max(lines * lineHeight + 40, 60); // 增加最小高度
+  const lineHeight = fontSize * 1.8; // 进一步增加行高，适合大字体
+  return Math.max(lines * lineHeight + 50, 80); // 增加最小高度，确保大字体有足够空间
 }
 
 function calculateTableHeight(token: ParsedToken): number {
-  const headerHeight = 50;
-  const rowHeight = 40;
+  const headerHeight = 70; // 增加表头高度
+  const rowHeight = 60; // 增加行高
   const rowCount = token.rows?.length || 0;
-  return headerHeight + (rowCount * rowHeight) + 40;
+  return headerHeight + (rowCount * rowHeight) + 60; // 增加总体边距
 }
 
 function formatTableContent(token: ParsedToken): string {

@@ -33,6 +33,7 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
     deleteElement,
     canvasFormat,
     canvasScale,
+    backgroundSettings,
     undo,
     redo,
     setPages
@@ -184,7 +185,7 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
       setSelectedElementId(null);
     } else {
       // 如果不是分页模式，使用原来的删除方式
-      deleteElement(elementId);
+    deleteElement(elementId);
     }
   }, [pages, currentPage, setPages, deleteElement, setSelectedElementId]);
 
@@ -227,6 +228,18 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
       };
     }
   }, [dragState, handleMouseMove, handleMouseUp]);
+
+  // Generate background style based on settings
+  const getCanvasBackgroundStyle = () => {
+    if (backgroundSettings.type === 'gradient') {
+      return {
+        background: `linear-gradient(${backgroundSettings.gradientDirection}, ${backgroundSettings.gradientColors?.join(', ') || '#ffffff, #f0f0f0'})`
+      };
+    }
+    return {
+      backgroundColor: backgroundSettings.solidColor || '#ffffff'
+    };
+  };
 
   const renderElement = (element: MarkdownElement) => {
     const isSelected = selectedElementId === element.id;
@@ -271,19 +284,19 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
           onClick={(e) => handleElementClick(e, element.id)}
           onMouseDown={(e) => handleMouseDown(e, element.id, 'move')}
         >
-          <div className="w-full h-full pointer-events-none">
-            {element.type === 'table' ? (
-              <div className="text-xs">
-                {element.content.split('\n').map((line, i) => (
-                  <div key={i} className={i === 1 ? 'border-b border-gray-300 pb-1 mb-1' : ''}>
-                    {line}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              element.content
-            )}
-          </div>
+            <div className="w-full h-full pointer-events-none">
+              {element.type === 'table' ? (
+                <div style={{ fontSize: element.fontSize }}>
+                  {element.content.split('\n').map((line, i) => (
+                    <div key={i} className={i === 1 ? 'border-b border-gray-300 pb-1 mb-1' : ''}>
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                element.content
+              )}
+            </div>
         </div>
         
         {/* Selection handles */}
@@ -368,17 +381,16 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
     <div className={`relative bg-gray-50 overflow-auto ${className}`}>
       <div
         ref={canvasRef}
-        className="relative bg-white shadow-lg mx-auto my-8"
+        className="relative shadow-lg mx-auto my-8"
         style={{
           width: canvasFormat.width,
           height: canvasFormat.height,
           transform: `scale(${canvasScale})`,
           transformOrigin: 'top center',
+          ...getCanvasBackgroundStyle()
         }}
         onClick={handleCanvasClick}
       >
-        {/* Canvas background */}
-        <div className="absolute inset-0 bg-white" />
         
         {/* Grid pattern */}
         <div 

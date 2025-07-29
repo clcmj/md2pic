@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Download, Image, Archive, Loader2, Settings, FileImage, Layers } from 'lucide-react';
+import { Download, Image, Archive, Loader2, Settings, FileImage, Layers, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
@@ -24,6 +24,7 @@ interface ExportOptions {
 }
 
 export function ExportPanel({ className = '' }: ExportPanelProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
@@ -40,6 +41,7 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
     canvasFormat,
     currentPage,
     totalPages,
+    backgroundSettings
   } = useAppStore();
 
   // Get current page elements
@@ -56,8 +58,14 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
     container.style.top = '-9999px';
     container.style.width = `${canvasFormat.width}px`;
     container.style.height = `${canvasFormat.height}px`;
-    container.style.backgroundColor = 'white';
     container.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    
+    // Apply background settings
+    if (backgroundSettings.type === 'gradient') {
+      container.style.background = `linear-gradient(${backgroundSettings.gradientDirection}, ${backgroundSettings.gradientColors?.join(', ') || '#ffffff, #f0f0f0'})`;
+    } else {
+      container.style.backgroundColor = backgroundSettings.solidColor || '#ffffff';
+    }
     
     document.body.appendChild(container);
     
@@ -109,7 +117,7 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
                 const cell = document.createElement(index === 0 ? 'th' : 'td');
                 cell.textContent = cellContent;
                 cell.style.border = '1px solid #d1d5db';
-                cell.style.padding = '12px';
+                cell.style.padding = '16px'; // 增加padding，适配大字体
                 cell.style.textAlign = element.textAlign || 'center';
                 if (index === 0) {
                   cell.style.backgroundColor = '#f9fafb';
@@ -165,7 +173,7 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
         width: canvasFormat.width,
         height: canvasFormat.height,
         scale: exportOptions.scale,
-        backgroundColor: '#ffffff',
+        backgroundColor: null, // 使用容器背景而不是固定白色
         useCORS: true,
         allowTaint: true,
         logging: false,
@@ -308,17 +316,31 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
             <Download className="w-5 h-5 text-green-600" />
             <h3 className="text-sm font-medium text-gray-700">图片导出</h3>
           </div>
-          <button
-            onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-            className="p-1 rounded hover:bg-gray-100"
-            title="高级选项"
-          >
-            <Settings className="w-4 h-4 text-gray-500" />
-          </button>
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+              className="p-1 rounded hover:bg-gray-100"
+              title="高级选项"
+            >
+              <Settings className="w-4 h-4 text-gray-500" />
+            </button>
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              {isExpanded ? (
+                <ChevronDown className="w-4 h-4 text-gray-600" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Advanced Options */}
-        {showAdvancedOptions && (
+        {isExpanded && (
+          <>
+            {/* Advanced Options */}
+            {showAdvancedOptions && (
           <div className="bg-gray-50 p-3 rounded-lg space-y-3">
             <div className="text-sm font-medium text-gray-700">导出设置</div>
             
@@ -507,6 +529,8 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
             <div>• 高分辨率导出适合印刷和高清显示</div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
