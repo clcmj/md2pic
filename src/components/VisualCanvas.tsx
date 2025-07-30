@@ -354,6 +354,53 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
     // 允许正常的 Enter 换行
   }, [handleSaveEdit, handleCancelEdit, editingContent]);
 
+  // Render table content as HTML table
+  const renderTable = (content: string) => {
+    if (typeof content !== 'string') {
+      return '';
+    }
+    
+    const lines = content.split('\n').filter(line => line.trim() !== '');
+    
+    if (lines.length < 3) {
+      return content;
+    }
+    
+    // 解析表格
+    const headerLine = lines[0];
+    const dataLines = lines.slice(2); // 跳过分隔符行
+    
+    const headers = headerLine.split('|').map(h => h.trim()).filter(h => h !== '');
+    const rows = dataLines.map(line => 
+      line.split('|').map(cell => cell.trim()).filter(cell => cell !== '')
+    );
+    
+    // 生成HTML表格
+    let html = '<table style="width: 100%; border-collapse: collapse; font-size: inherit;">';
+    
+    // 表头
+    html += '<thead><tr>';
+    headers.forEach(header => {
+      html += `<th style="border: 1px solid #d1d5db; background-color: #f9fafb; padding: 8px 12px; text-align: left; font-weight: 600; color: #374151;">${header}</th>`;
+    });
+    html += '</tr></thead>';
+    
+    // 表体
+    html += '<tbody>';
+    rows.forEach((row, i) => {
+      const bgColor = i % 2 === 0 ? '#ffffff' : '#f9fafb';
+      html += `<tr style="background-color: ${bgColor};">`;
+      headers.forEach((_, j) => {
+        const cellContent = row[j] || '';
+        html += `<td style="border: 1px solid #d1d5db; padding: 8px 12px; color: #1f2937;">${cellContent}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    
+    return html;
+  };
+
   // Generate background style based on settings
   const getCanvasBackgroundStyle = () => {
     if (backgroundSettings.type === 'gradient') {
@@ -427,7 +474,7 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
                    fontSize: element.fontSize,
                    color: element.color,
                    textAlign: element.textAlign,
-                   fontFamily: element.type === 'code' ? 'JetBrains Mono, Consolas, Monaco, monospace' : 'inherit',
+                   fontFamily: element.type === 'code' || element.type === 'table' ? 'JetBrains Mono, Consolas, Monaco, monospace' : 'inherit',
                    fontWeight: element.type === 'heading' ? 'bold' : 'normal',
                    fontStyle: element.type === 'blockquote' ? 'italic' : 'normal',
                    whiteSpace: 'pre-wrap',
@@ -448,13 +495,12 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
                          // Display mode - show content
              <div className="w-full h-full pointer-events-none" style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
                {element.type === 'table' ? (
-                 <div style={{ fontSize: element.fontSize }}>
-                   {element.content.split('\n').map((line, i) => (
-                     <div key={i} className={i === 1 ? 'border-b border-gray-300 pb-1 mb-1' : ''}>
-                       {line}
-                     </div>
-                   ))}
-                 </div>
+                 <div 
+                   style={{ fontSize: element.fontSize }}
+                   dangerouslySetInnerHTML={{ 
+                     __html: typeof element.content === 'string' ? renderTable(element.content) : ''
+                   }}
+                 />
                ) : (
                  element.content
                )}

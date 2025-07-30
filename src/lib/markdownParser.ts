@@ -216,7 +216,7 @@ function createElementFromToken(
       const tableContent = formatTableContent(token);
       return {
         ...baseElement,
-        type: 'table',
+        type: 'table' as const,
         content: tableContent,
         height: calculateTableHeight(token),
         fontSize: 24,
@@ -269,10 +269,37 @@ function formatTableContent(token: ParsedToken): string {
   const headers = token.header || [];
   const rows = token.rows || [];
   
-  let content = headers.join(' | ') + '\n';
-  content += headers.map(() => '---').join(' | ') + '\n';
+  // 确保headers和rows中的每个元素都是字符串
+  const stringHeaders = headers.map(header => {
+    if (typeof header === 'string') {
+      return header;
+    } else if (header && typeof header === 'object' && 'text' in header) {
+      return (header as any).text || '';
+    } else if (header && typeof header === 'object' && 'raw' in header) {
+      return (header as any).raw || '';
+    } else {
+      return String(header);
+    }
+  });
   
-  rows.forEach(row => {
+  const stringRows = rows.map(row => {
+    return row.map(cell => {
+      if (typeof cell === 'string') {
+        return cell;
+      } else if (cell && typeof cell === 'object' && 'text' in cell) {
+        return (cell as any).text || '';
+      } else if (cell && typeof cell === 'object' && 'raw' in cell) {
+        return (cell as any).raw || '';
+      } else {
+        return String(cell);
+      }
+    });
+  });
+  
+  let content = stringHeaders.join(' | ') + '\n';
+  content += stringHeaders.map(() => '---').join(' | ') + '\n';
+  
+  stringRows.forEach(row => {
     content += row.join(' | ') + '\n';
   });
   

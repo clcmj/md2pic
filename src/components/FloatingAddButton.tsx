@@ -64,7 +64,7 @@ export function FloatingAddButton({ className = '' }: FloatingAddButtonProps) {
       case 'code':
         return 'function hello() {\n  console.log("Hello World!");\n  return "支持多行代码";\n}';
       case 'table':
-        return '标题1 | 标题2 | 标题3\n---|---|---\n内容1 | 内容2 | 内容3\n数据1 | 数据2 | 数据3';
+        return '项目 | 状态 | 备注\n---|---|---\n任务A | 完成 | 按时交付\n任务B | 进行中 | 延期一天\n任务C | 待开始 | 等待资源';
       default:
         return '新元素';
     }
