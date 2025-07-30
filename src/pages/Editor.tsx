@@ -172,7 +172,7 @@ export function Editor() {
       <footer className="bg-white border-t border-gray-200 px-6 py-3">
         <div className="flex items-center justify-between text-sm text-gray-500">
           <div className="flex items-center space-x-4">
-            <span>快捷键: Ctrl+Z 撤销 | Ctrl+Y 重做 | Delete 删除</span>
+            <span>快捷键: 双击编辑 | Enter换行 | Ctrl+Enter保存 | Esc取消 | Ctrl+Z撤销 | Delete删除</span>
           </div>
           <div className="flex items-center space-x-4">
             <span>© 2024 md2pic - Markdown to Image Tool</span>

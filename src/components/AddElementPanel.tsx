@@ -89,13 +89,13 @@ export function AddElementPanel({ className = '' }: AddElementPanelProps) {
         if (level === 3) return '三级标题';
         return '标题';
       case 'paragraph':
-        return '点击编辑文本内容...';
+        return '这里是段落文本\n可以使用Enter键换行\n支持多行内容编辑';
       case 'list':
-        return '• 列表项 1\n• 列表项 2\n• 列表项 3';
+        return '• 列表项 1\n• 列表项 2\n• 列表项 3\n• 可以添加更多项目';
       case 'blockquote':
-        return '这是一个引用块，用于突出重要内容。';
+        return '这是一个引用块\n用于突出重要内容\n支持多行引用文字';
       case 'code':
-        return 'console.log("Hello World!");';
+        return 'function hello() {\n  console.log("Hello World!");\n  return "支持多行代码";\n}';
       case 'table':
         return '标题1 | 标题2 | 标题3\n---|---|---\n内容1 | 内容2 | 内容3\n数据1 | 数据2 | 数据3';
       default:
@@ -212,8 +212,9 @@ export function AddElementPanel({ className = '' }: AddElementPanelProps) {
               </div>
               <ul className="space-y-1 ml-4">
                 <li>• 新元素将添加到画布中心位置</li>
-                <li>• 添加后会自动选中，可在右侧编辑</li>
-                <li>• 拖拽元素可调整位置</li>
+                <li>• 双击元素可直接编辑，支持多行文本</li>
+                <li>• Enter换行，Ctrl+Enter保存，Esc取消</li>
+                <li>• 拖拽元素可调整位置和大小</li>
               </ul>
             </div>
           </div>

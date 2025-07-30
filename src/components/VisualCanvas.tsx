@@ -17,11 +17,17 @@ interface DragState {
   startElementWidth: number;
   startElementHeight: number;
   resizeHandle?: string;
+  hasMoved?: boolean;
 }
 
 export function VisualCanvas({ className = '' }: VisualCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
+  const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState<string>('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastClickTimeRef = useRef<number>(0);
   
   const {
     elements,
@@ -67,10 +73,33 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
     }
   }, [pages, currentPage, setPages, updateElement]);
 
-  // Handle element selection
+  // Handle element selection with click delay to avoid double-click conflict
   const handleElementClick = useCallback((e: React.MouseEvent, elementId: string) => {
     e.stopPropagation();
-    setSelectedElementId(elementId);
+    
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastClickTimeRef.current;
+    
+    // If double-click (< 400ms between clicks), ignore single click
+    if (timeDiff < 400) {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+        clickTimeoutRef.current = null;
+      }
+      return;
+    }
+    
+    // Delay single click to allow for potential double-click
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+    
+    clickTimeoutRef.current = setTimeout(() => {
+      setSelectedElementId(elementId);
+      clickTimeoutRef.current = null;
+    }, 200);
+    
+    lastClickTimeRef.current = currentTime;
   }, [setSelectedElementId]);
 
   // Handle canvas click (deselect)
@@ -83,9 +112,16 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Cancel any pending click timeout to prevent selection delay during drag
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+    }
+    
     const element = currentPageElements.find(el => el.id === elementId);
     if (!element) return;
     
+    // Immediately select element for drag operations
     setSelectedElementId(elementId);
     
     const canvasRect = canvasRef.current?.getBoundingClientRect();
@@ -100,7 +136,8 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
       startElementY: element.y,
       startElementWidth: element.width,
       startElementHeight: element.height,
-      resizeHandle
+      resizeHandle,
+      hasMoved: false
     });
   }, [currentPageElements, setSelectedElementId]);
 
@@ -113,6 +150,11 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
     
     const deltaX = (e.clientX - dragState.startX) / canvasScale;
     const deltaY = (e.clientY - dragState.startY) / canvasScale;
+    
+    // Mark as moved if there's any significant movement
+    if (!dragState.hasMoved && (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2)) {
+      setDragState(prev => prev ? { ...prev, hasMoved: true } : null);
+    }
     
     if (dragState.dragType === 'move') {
       updateCurrentPageElement(selectedElementId, {
@@ -166,9 +208,11 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
   // Handle drag end
   const handleMouseUp = useCallback(() => {
     if (dragState) {
-      // Save to history when drag ends
-      const { saveToHistory } = useAppStore.getState();
-      saveToHistory();
+      // Save to history when drag ends (only if actually moved)
+      if (dragState.hasMoved) {
+        const { saveToHistory } = useAppStore.getState();
+        saveToHistory();
+      }
     }
     setDragState(null);
   }, [dragState]);
@@ -229,6 +273,87 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
     }
   }, [dragState, handleMouseMove, handleMouseUp]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Handle double click to edit element
+  const handleDoubleClick = useCallback((e: React.MouseEvent, elementId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Clear any pending click timeout
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+    }
+    
+    // Don't enter edit mode if we're currently dragging
+    if (dragState?.isDragging) {
+      return;
+    }
+    
+    const element = currentPageElements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    setEditingElementId(elementId);
+    setEditingContent(element.content);
+    setSelectedElementId(elementId);
+    
+    // Focus textarea after it's rendered
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.select();
+    }, 0);
+  }, [currentPageElements, setSelectedElementId, dragState?.isDragging]);
+
+  // Handle save edit
+  const handleSaveEdit = useCallback(() => {
+    if (!editingElementId) return;
+    
+    updateCurrentPageElement(editingElementId, { content: editingContent });
+    setEditingElementId(null);
+    setEditingContent('');
+  }, [editingElementId, editingContent, updateCurrentPageElement]);
+
+  // Handle cancel edit
+  const handleCancelEdit = useCallback(() => {
+    setEditingElementId(null);
+    setEditingContent('');
+  }, []);
+
+  // Handle edit keydown
+  const handleEditKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      // Ctrl+Enter 保存
+      e.preventDefault();
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      // Esc 取消
+      e.preventDefault();
+      handleCancelEdit();
+    } else if (e.key === 'Tab') {
+      // Tab 插入制表符
+      e.preventDefault();
+      const textarea = e.target as HTMLTextAreaElement;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newContent = editingContent.substring(0, start) + '\t' + editingContent.substring(end);
+      setEditingContent(newContent);
+      
+      // 恢复光标位置
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + 1;
+      }, 0);
+    }
+    // 允许正常的 Enter 换行
+  }, [handleSaveEdit, handleCancelEdit, editingContent]);
+
   // Generate background style based on settings
   const getCanvasBackgroundStyle = () => {
     if (backgroundSettings.type === 'gradient') {
@@ -257,7 +382,8 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
       padding: '12px',
       border: isSelected ? '2px solid #3b82f6' : '1px solid transparent',
       borderRadius: '4px',
-      cursor: dragState?.isDragging ? 'grabbing' : 'grab',
+      cursor: dragState?.isDragging ? 'grabbing' : (editingElementId === element.id ? 'text' : 'grab'),
+      transition: dragState?.isDragging ? 'none' : 'all 0.1s ease',
       userSelect: 'none',
       lineHeight: '1.5',
       overflow: 'hidden',
@@ -282,21 +408,58 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
         <div
           style={elementStyle}
           onClick={(e) => handleElementClick(e, element.id)}
-          onMouseDown={(e) => handleMouseDown(e, element.id, 'move')}
+          onDoubleClick={(e) => handleDoubleClick(e, element.id)}
+          onMouseDown={(e) => !editingElementId ? handleMouseDown(e, element.id, 'move') : undefined}
+          className={editingElementId !== element.id ? 'hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 transition-all' : ''}
+          title={editingElementId !== element.id ? '双击编辑内容' : ''}
         >
-            <div className="w-full h-full pointer-events-none">
-              {element.type === 'table' ? (
-                <div style={{ fontSize: element.fontSize }}>
-                  {element.content.split('\n').map((line, i) => (
-                    <div key={i} className={i === 1 ? 'border-b border-gray-300 pb-1 mb-1' : ''}>
-                      {line}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                element.content
-              )}
+          {editingElementId === element.id ? (
+            // Edit mode - show textarea with editing indicator
+            <div className="relative w-full h-full">
+                             <textarea
+                 ref={textareaRef}
+                 value={editingContent}
+                 onChange={(e) => setEditingContent(e.target.value)}
+                 onKeyDown={handleEditKeyDown}
+                 onBlur={handleSaveEdit}
+                 className="w-full h-full p-0 bg-white bg-opacity-90 border-2 border-blue-400 border-dashed outline-none resize-none rounded"
+                 style={{
+                   fontSize: element.fontSize,
+                   color: element.color,
+                   textAlign: element.textAlign,
+                   fontFamily: element.type === 'code' ? 'JetBrains Mono, Consolas, Monaco, monospace' : 'inherit',
+                   fontWeight: element.type === 'heading' ? 'bold' : 'normal',
+                   fontStyle: element.type === 'blockquote' ? 'italic' : 'normal',
+                   whiteSpace: 'pre-wrap',
+                   lineHeight: '1.5',
+                   padding: '8px',
+                   wordWrap: 'break-word',
+                   overflowWrap: 'break-word',
+                 }}
+                 placeholder="输入内容... (Enter换行, Ctrl+Enter保存)"
+                 autoFocus
+               />
+                             {/* Edit indicator */}
+               <div className="absolute -top-6 left-0 bg-blue-500 text-white px-2 py-1 rounded text-xs whitespace-nowrap">
+                 编辑中 - Enter换行 / Ctrl+Enter保存 / Esc取消
+               </div>
             </div>
+          ) : (
+                         // Display mode - show content
+             <div className="w-full h-full pointer-events-none" style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+               {element.type === 'table' ? (
+                 <div style={{ fontSize: element.fontSize }}>
+                   {element.content.split('\n').map((line, i) => (
+                     <div key={i} className={i === 1 ? 'border-b border-gray-300 pb-1 mb-1' : ''}>
+                       {line}
+                     </div>
+                   ))}
+                 </div>
+               ) : (
+                 element.content
+               )}
+             </div>
+          )}
         </div>
         
         {/* Selection handles */}
