@@ -1,0 +1,37 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景渐变 -->
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="md-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f1f5f9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="32" height="32" rx="6" fill="url(#bg-gradient)"/>
+  
+  <!-- Markdown文档图标 -->
+  <rect x="5" y="6" width="12" height="15" rx="1.5" fill="url(#md-gradient)" stroke="#334155" stroke-width="0.5"/>
+  
+  <!-- Markdown # 符号 -->
+  <text x="7.5" y="12" font-family="monospace" font-size="4" font-weight="bold" fill="#334155">#</text>
+  <rect x="7" y="14" width="8" height="0.5" fill="#64748b"/>
+  <rect x="7" y="16" width="6" height="0.5" fill="#64748b"/>
+  <rect x="7" y="18" width="4" height="0.5" fill="#64748b"/>
+  
+  <!-- 转换箭头 -->
+  <path d="M18 13 L22 13 M20 11 L22 13 L20 15" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- 图片图标 -->
+  <rect x="23" y="10" width="7" height="6" rx="1" fill="#ffffff" stroke="#334155" stroke-width="0.5"/>
+  <circle cx="25" cy="12.5" r="0.8" fill="#fbbf24"/>
+  <path d="M24 15 L26 13 L28 15 L30 13" stroke="#334155" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+  
+  <!-- 装饰性光点 -->
+  <circle cx="8" cy="24" r="1" fill="#ffffff" opacity="0.3"/>
+  <circle cx="26" cy="25" r="0.8" fill="#ffffff" opacity="0.4"/>
+</svg>

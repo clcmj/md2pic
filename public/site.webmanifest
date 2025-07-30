@@ -1,0 +1,34 @@
+{
+  "name": "md2pic - Markdown转图片工具",
+  "short_name": "md2pic",
+  "description": "专业的Markdown转图片工具，支持实时预览、可视化编辑和高质量图片导出",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "categories": ["productivity", "utilities", "graphics"]
+}

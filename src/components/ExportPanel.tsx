@@ -44,6 +44,40 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
     backgroundSettings
   } = useAppStore();
 
+  // 动态计算元素高度的函数
+  const calculateDynamicHeight = (element: any): number => {
+    const padding = 24; // 上下padding总和 (12px * 2)
+    const lineHeight = 1.8;
+    const fontSize = element.fontSize;
+    
+    // 计算文字行数
+    const content = element.content || '';
+    const avgCharsPerLine = Math.floor((element.width - padding) / (fontSize * 0.6)); // 中文字符宽度约为字体大小的0.6倍
+    const estimatedLines = Math.max(1, Math.ceil(content.length / avgCharsPerLine));
+    
+    // 考虑换行符
+    const actualLines = Math.max(estimatedLines, content.split('\n').length);
+    
+    // 根据元素类型调整
+    let heightMultiplier = 1;
+    switch (element.type) {
+      case 'heading':
+        heightMultiplier = 1.2; // 标题需要更多空间
+        break;
+      case 'table':
+        heightMultiplier = 2.0; // 表格需要大量空间
+        break;
+      case 'code':
+      case 'blockquote':
+        heightMultiplier = 1.1;
+        break;
+      default:
+        heightMultiplier = 1.0;
+    }
+    
+    return Math.ceil(actualLines * fontSize * lineHeight * heightMultiplier) + padding + 20; // 额外20px缓冲
+  };
+
   // Get current page elements
   const currentPageElements = pages.length > 0 && pages[currentPage - 1] 
     ? pages[currentPage - 1] 
@@ -77,16 +111,21 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
         elementDiv.style.left = `${element.x}px`;
         elementDiv.style.top = `${element.y}px`;
         elementDiv.style.width = `${element.width}px`;
-        elementDiv.style.height = `${element.height}px`;
+        
+        // 动态计算元素高度，确保文字完全显示
+        const calculatedHeight = calculateDynamicHeight(element);
+        elementDiv.style.height = `${Math.max(element.height, calculatedHeight)}px`;
+        
         elementDiv.style.fontSize = `${element.fontSize}px`;
         elementDiv.style.color = element.color;
         elementDiv.style.backgroundColor = element.backgroundColor || 'transparent';
         elementDiv.style.textAlign = element.textAlign;
         elementDiv.style.padding = '12px';
-        elementDiv.style.lineHeight = '1.6';
-        elementDiv.style.overflow = 'hidden';
+        elementDiv.style.lineHeight = '1.8'; // 增加行高，确保文字间距充足
+        elementDiv.style.overflow = 'visible'; // 允许内容超出元素边界显示
         elementDiv.style.wordWrap = 'break-word';
         elementDiv.style.boxSizing = 'border-box';
+        elementDiv.style.whiteSpace = 'pre-wrap'; // 保持换行和空格
         
         if (element.type === 'heading') {
           elementDiv.style.fontWeight = 'bold';
@@ -107,6 +146,7 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
           table.style.borderCollapse = 'collapse';
           table.style.fontSize = 'inherit';
           table.style.margin = '0 auto';
+          table.style.tableLayout = 'auto'; // 允许表格自动调整列宽
           
           lines.forEach((line, index) => {
             if (line.trim() && !line.includes('---')) {
@@ -117,8 +157,14 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
                 const cell = document.createElement(index === 0 ? 'th' : 'td');
                 cell.textContent = cellContent;
                 cell.style.border = '1px solid #d1d5db';
-                cell.style.padding = '16px'; // 增加padding，适配大字体
+                cell.style.padding = '20px'; // 增加padding，确保内容有足够空间
                 cell.style.textAlign = element.textAlign || 'center';
+                cell.style.verticalAlign = 'middle'; // 垂直居中
+                cell.style.whiteSpace = 'normal'; // 允许文字换行
+                cell.style.wordWrap = 'break-word'; // 长单词换行
+                cell.style.lineHeight = '1.6'; // 设置行高
+                cell.style.minHeight = `${element.fontSize * 1.8}px`; // 最小高度
+                
                 if (index === 0) {
                   cell.style.backgroundColor = '#f9fafb';
                   cell.style.fontWeight = 'bold';
@@ -130,6 +176,8 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
             }
           });
           
+          // 确保表格容器有足够高度
+          elementDiv.style.minHeight = `${lines.length * element.fontSize * 2.5}px`;
           elementDiv.appendChild(table);
         } else {
           elementDiv.textContent = element.content;
