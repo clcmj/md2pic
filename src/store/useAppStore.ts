@@ -56,6 +56,7 @@ interface AppState {
   setElements: (elements: MarkdownElement[]) => void;
   updateElement: (id: string, updates: Partial<MarkdownElement>) => void;
   deleteElement: (id: string) => void;
+  addElement: (element: Omit<MarkdownElement, 'id'>) => void;
   
   // Selected element
   selectedElementId: string | null;
@@ -145,6 +146,33 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ elements, selectedElementId: null });
     get().saveToHistory();
   },
+  addElement: (elementData) => {
+    const newElement: MarkdownElement = {
+      ...elementData,
+      id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    };
+    
+    const state = get();
+    
+    // 如果是分页模式，添加到当前页面
+    if (state.pages.length > 1) {
+      const updatedPages = [...state.pages];
+      const currentPageIndex = state.currentPage - 1;
+      if (updatedPages[currentPageIndex]) {
+        updatedPages[currentPageIndex] = [...updatedPages[currentPageIndex], newElement];
+        set({ 
+          pages: updatedPages, 
+          selectedElementId: newElement.id 
+        });
+      }
+    } else {
+      // 非分页模式，添加到elements
+      const elements = [...state.elements, newElement];
+      set({ elements, selectedElementId: newElement.id });
+    }
+    
+    get().saveToHistory();
+  },
   
   // Selected element
   selectedElementId: null,
@@ -153,7 +181,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Canvas settings
   canvasFormat: defaultCanvasFormats[0],
   setCanvasFormat: (format) => set({ canvasFormat: format }),
-  canvasScale: 1,
+  canvasScale: 0.5,
   setCanvasScale: (scale) => set({ canvasScale: scale }),
   
   // Style settings

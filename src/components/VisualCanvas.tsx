@@ -381,7 +381,7 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
     <div className={`relative bg-gray-50 overflow-auto ${className}`}>
       <div
         ref={canvasRef}
-        className="relative shadow-lg mx-auto my-8"
+        className="relative shadow-lg mx-auto mt-4 mb-8"
         style={{
           width: canvasFormat.width,
           height: canvasFormat.height,
@@ -412,15 +412,7 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
           {canvasFormat.name} ({canvasFormat.width} × {canvasFormat.height})
         </div>
         
-        {/* Instruction overlay when no element is selected */}
-        {!selectedElementId && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center text-gray-400 pointer-events-none">
-            <div className="bg-white bg-opacity-90 rounded-lg p-4 shadow-lg">
-              <p className="text-sm">点击元素进行编辑</p>
-              <p className="text-xs mt-1">编辑选项将在右侧面板显示</p>
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );

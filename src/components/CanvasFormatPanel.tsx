@@ -16,17 +16,17 @@ export function CanvasFormatPanel({ className = '' }: CanvasFormatPanelProps) {
   } = useAppStore();
 
   const handleZoomIn = () => {
-    const newScale = Math.min(canvasScale + 0.1, 2);
+    const newScale = Math.min(canvasScale + 0.1, 1);
     setCanvasScale(newScale);
   };
 
   const handleZoomOut = () => {
-    const newScale = Math.max(canvasScale - 0.1, 0.3);
+    const newScale = Math.max(canvasScale - 0.1, 0);
     setCanvasScale(newScale);
   };
 
   const handleResetZoom = () => {
-    setCanvasScale(1);
+    setCanvasScale(0.5);
   };
 
   return (
@@ -90,7 +90,7 @@ export function CanvasFormatPanel({ className = '' }: CanvasFormatPanelProps) {
                 <button
                   onClick={handleZoomOut}
                   className="p-2 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
-                  disabled={canvasScale <= 0.3}
+                  disabled={canvasScale <= 0}
                 >
                   <ZoomOut className="w-4 h-4" />
                 </button>
@@ -107,7 +107,7 @@ export function CanvasFormatPanel({ className = '' }: CanvasFormatPanelProps) {
                 <button
                   onClick={handleZoomIn}
                   className="p-2 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
-                  disabled={canvasScale >= 2}
+                  disabled={canvasScale >= 1}
                 >
                   <ZoomIn className="w-4 h-4" />
                 </button>
@@ -116,9 +116,9 @@ export function CanvasFormatPanel({ className = '' }: CanvasFormatPanelProps) {
               {/* Zoom slider */}
               <input
                 type="range"
-                min="0.3"
-                max="2"
-                step="0.1"
+                min="0"
+                max="1"
+                step="0.05"
                 value={canvasScale}
                 onChange={(e) => setCanvasScale(parseFloat(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"

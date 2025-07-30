@@ -7,6 +7,8 @@ import { ExportPanel } from '../components/ExportPanel';
 import { PageSplitPanel } from '../components/PageSplitPanel';
 import { ElementEditPanel } from '../components/ElementEditPanel';
 import { BackgroundPanel } from '../components/BackgroundPanel';
+import { AddElementPanel } from '../components/AddElementPanel';
+import { FloatingAddButton } from '../components/FloatingAddButton';
 import { useAppStore } from '../store/useAppStore';
 import { parseMarkdownToElements } from '../lib/markdownParser';
 import { FileText, Palette, Download, Settings } from 'lucide-react';
@@ -140,6 +142,9 @@ export function Editor() {
               
               {/* Scrollable content area */}
               <div className="flex-1 overflow-y-auto">
+                {/* Add Element Panel */}
+                <AddElementPanel />
+                
                 {/* Page Split Panel */}
                 <PageSplitPanel />
                 
@@ -159,6 +164,9 @@ export function Editor() {
           )}
         </div>
       </div>
+
+      {/* Floating Add Button */}
+      <FloatingAddButton />
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 px-6 py-3">
