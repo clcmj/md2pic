@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Palette, Type, AlignLeft, AlignCenter, AlignRight, Plus, Minus, ChevronDown, ChevronRight } from 'lucide-react';
+import React from 'react';
+import { Palette, Type, AlignLeft, AlignCenter, AlignRight, Plus, Minus } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import type { StyleSettings } from '../store/useAppStore';
 
@@ -24,7 +24,6 @@ const presetColors = [
 ];
 
 export function StylePanel({ className = '' }: StylePanelProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
   
   const {
     styleSettings,
@@ -65,28 +64,7 @@ export function StylePanel({ className = '' }: StylePanelProps) {
   };
 
   return (
-    <div className={`bg-white border-l border-gray-200 overflow-y-auto ${className}`}>
-      <div className="p-4 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Palette className="w-5 h-5 text-purple-600" />
-            <h2 className="text-lg font-semibold text-gray-900">样式控制</h2>
-          </div>
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-600" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-600" />
-            )}
-          </button>
-        </div>
-
-        {isExpanded && (
-          <>
+    <div className={`p-4 space-y-6 ${className}`}>
             {/* Global Styles */}
             <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-700 border-b pb-2">全局样式</h3>
@@ -346,9 +324,6 @@ export function StylePanel({ className = '' }: StylePanelProps) {
             <div>• 拖拽调整位置和大小</div>
           </div>
         </div>
-          </>
-        )}
-      </div>
     </div>
   );
 }

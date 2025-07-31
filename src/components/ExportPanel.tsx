@@ -24,7 +24,6 @@ interface ExportOptions {
 }
 
 export function ExportPanel({ className = '' }: ExportPanelProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);

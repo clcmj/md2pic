@@ -1,19 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MarkdownEditor } from '../components/MarkdownEditor';
 import { VisualCanvas } from '../components/VisualCanvas';
-import { StylePanel } from '../components/StylePanel';
-import { CanvasFormatPanel } from '../components/CanvasFormatPanel';
-import { ExportPanel } from '../components/ExportPanel';
-import { PageSplitPanel } from '../components/PageSplitPanel';
-import { ElementEditPanel } from '../components/ElementEditPanel';
-import { BackgroundPanel } from '../components/BackgroundPanel';
-import { AddElementPanel } from '../components/AddElementPanel';
+import { SidebarMenu, MenuTab } from '../components/SidebarMenu';
+import { ControlPanel } from '../components/ControlPanel';
 import { FloatingAddButton } from '../components/FloatingAddButton';
 import { useAppStore } from '../store/useAppStore';
 import { parseMarkdownToElements } from '../lib/markdownParser';
-import { FileText, Palette, Download, Settings } from 'lucide-react';
+import { FileText, Palette, Settings } from 'lucide-react';
 
 export function Editor() {
+  const [activeTab, setActiveTab] = useState<MenuTab>('elements');
+  
   const { 
     markdownContent, 
     setElements, 
@@ -78,16 +75,11 @@ export function Editor() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - Markdown Editor */}
-        <div className="w-1/3 min-w-[300px] max-w-[500px] flex flex-col border-r border-gray-200">
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <div className="flex items-center space-x-2">
-              <FileText className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">编辑器</span>
-            </div>
-          </div>
-          <MarkdownEditor className="flex-1" />
-        </div>
+        {/* Left Sidebar - Icon Menu */}
+        <SidebarMenu activeTab={activeTab} onTabChange={setActiveTab} />
+        
+        {/* Left Panel - Control Panel */}
+        <ControlPanel activeTab={activeTab} />
 
         {/* Center Panel - Visual Canvas */}
         <div className="flex-1 flex flex-col">
@@ -114,7 +106,7 @@ export function Editor() {
                   if (currentPage < totalPages) setCurrentPage(currentPage + 1);
                 }}
                 disabled={currentPage >= totalPages}
-                className="px-2 py-1 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 py-1 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:cursor-not-allowed"
               >
                 下一页
               </button>
@@ -125,43 +117,15 @@ export function Editor() {
           <VisualCanvas className="flex-1" />
         </div>
 
-        {/* Right Panel - Controls */}
-        <div className="w-80 flex flex-col border-l border-gray-200 bg-white">
-          {selectedElementId ? (
-            // 元素编辑面板
-            <ElementEditPanel />
-          ) : (
-            // 默认控制面板
-            <>
-              <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
-                <div className="flex items-center space-x-2">
-                  <Settings className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-medium text-gray-700">控制面板</span>
-                </div>
-              </div>
-              
-              {/* Scrollable content area */}
-              <div className="flex-1 overflow-y-auto">
-                {/* Add Element Panel */}
-                <AddElementPanel />
-                
-                {/* Page Split Panel */}
-                <PageSplitPanel />
-                
-                {/* Background Panel */}
-                <BackgroundPanel />
-                
-                {/* Canvas Format Panel */}
-                <CanvasFormatPanel />
-                
-                {/* Export Panel */}
-                <ExportPanel />
-                
-                {/* Style Panel */}
-                <StylePanel />
-              </div>
-            </>
-          )}
+        {/* Right Panel - Markdown Editor */}
+        <div className="w-1/3 min-w-[300px] max-w-[500px] flex flex-col border-l border-gray-200">
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <div className="flex items-center space-x-2">
+              <FileText className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-gray-700">Markdown 编辑器</span>
+            </div>
+          </div>
+          <MarkdownEditor className="flex-1" />
         </div>
       </div>
 

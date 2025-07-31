@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Type, Heading1, Heading2, Heading3, AlignLeft, Quote, Code, Table, ChevronDown, ChevronRight } from 'lucide-react';
+import React from 'react';
+import { Plus, Type, Heading1, Heading2, Heading3, AlignLeft, Quote, Code, Table } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 
 interface AddElementPanelProps {
@@ -7,7 +7,6 @@ interface AddElementPanelProps {
 }
 
 export function AddElementPanel({ className = '' }: AddElementPanelProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const { addElement, canvasFormat, styleSettings } = useAppStore();
 
   // 获取默认颜色
@@ -158,67 +157,43 @@ export function AddElementPanel({ className = '' }: AddElementPanelProps) {
   ];
 
   return (
-    <div className={`bg-white border-b border-gray-200 ${className}`}>
-      <div className="p-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Plus className="w-5 h-5 text-blue-600" />
-            <h3 className="text-sm font-medium text-gray-700">添加元素</h3>
-          </div>
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-600" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-600" />
-            )}
-          </button>
-        </div>
-
-        {isExpanded && (
-          <div className="space-y-3">
-            {/* Element Types Grid */}
-            <div className="grid grid-cols-2 gap-2">
-              {elementTypes.map((item) => {
-                const IconComponent = item.icon;
-                return (
-                  <button
-                    key={`${item.type}-${item.level || 'default'}`}
-                    onClick={() => handleAddElement(item.type, item.level)}
-                    className="p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-left group"
-                  >
-                    <div className="flex items-center space-x-2 mb-1">
-                      <IconComponent className="w-4 h-4 text-gray-600 group-hover:text-blue-600" />
-                      <span className="text-sm font-medium text-gray-800 group-hover:text-blue-800">
-                        {item.label}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 group-hover:text-blue-600">
-                      {item.description}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Quick Add Tips */}
-            <div className="text-xs text-gray-500 bg-gray-50 rounded p-3">
-              <div className="flex items-center space-x-1 mb-1">
-                <Plus className="w-3 h-3" />
-                <span className="font-medium">快速添加提示：</span>
+    <div className={`p-4 space-y-4 ${className}`}>
+      {/* Element Types Grid */}
+      <div className="grid grid-cols-2 gap-2">
+        {elementTypes.map((item) => {
+          const IconComponent = item.icon;
+          return (
+            <button
+              key={`${item.type}-${item.level || 'default'}`}
+              onClick={() => handleAddElement(item.type, item.level)}
+              className="p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-left group"
+            >
+              <div className="flex items-center space-x-2 mb-1">
+                <IconComponent className="w-4 h-4 text-gray-600 group-hover:text-blue-600" />
+                <span className="text-sm font-medium text-gray-800 group-hover:text-blue-800">
+                  {item.label}
+                </span>
               </div>
-              <ul className="space-y-1 ml-4">
-                <li>• 新元素将添加到画布中心位置</li>
-                <li>• 双击元素可直接编辑，支持多行文本</li>
-                <li>• Enter换行，Ctrl+Enter保存，Esc取消</li>
-                <li>• 拖拽元素可调整位置和大小</li>
-              </ul>
-            </div>
-          </div>
-        )}
+              <p className="text-xs text-gray-500 group-hover:text-blue-600">
+                {item.description}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Quick Add Tips */}
+      <div className="text-xs text-gray-500 bg-gray-50 rounded p-3">
+        <div className="flex items-center space-x-1 mb-1">
+          <Plus className="w-3 h-3" />
+          <span className="font-medium">快速添加提示：</span>
+        </div>
+        <ul className="space-y-1 ml-4">
+          <li>• 新元素将添加到画布中心位置</li>
+          <li>• 双击元素可直接编辑，支持多行文本</li>
+          <li>• Enter换行，Ctrl+Enter保存，Esc取消</li>
+          <li>• 拖拽元素可调整位置和大小</li>
+        </ul>
       </div>
     </div>
   );
