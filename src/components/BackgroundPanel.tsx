@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Palette, Layers, Circle, ChevronDown, ChevronRight, 
-  Square, Sparkles, Frame, Grid 
+  Square, Sparkles, Frame, Grid, Shuffle 
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import type { BackgroundSettings } from '../store/useAppStore';
@@ -101,9 +101,8 @@ const beautifyThemes = [
 ];
 
 export function BackgroundPanel({ className = '' }: BackgroundPanelProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'background' | 'border' | 'shadow' | 'pattern' | 'frame'>('background');
-  const { backgroundSettings, updateBackgroundSettings } = useAppStore();
+  const { backgroundSettings, updateBackgroundSettings, generateRandomBackground } = useAppStore();
 
   const handleTypeChange = (type: 'solid' | 'gradient') => {
     updateBackgroundSettings({ type });
@@ -174,31 +173,56 @@ export function BackgroundPanel({ className = '' }: BackgroundPanelProps) {
   };
 
   return (
-    <div className={`bg-white border-b border-gray-200 ${className}`}>
-      <div className="p-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Sparkles className="w-5 h-5 text-pink-600" />
-            <h3 className="text-sm font-medium text-gray-700">图片美化</h3>
-          </div>
+    <div className={`p-5 space-y-5 ${className}`}>
+            {/* 背景快捷按钮 */}
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 hover:bg-gray-100 rounded"
+            onClick={generateRandomBackground}
+            className="flex items-center justify-center space-x-2 py-2.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-[1.02] text-sm"
           >
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-600" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-600" />
-            )}
+            <Shuffle className="w-4 h-4" />
+            <span className="font-medium">随机背景</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              updateBackgroundSettings({
+                type: 'gradient',
+                gradientType: 'linear',
+                gradientDirection: 'to bottom right',
+                gradientColors: ['#f8fafc', '#f1f5f9'],
+                border: {
+                  enabled: true,
+                  width: 2,
+                  color: '#e2e8f0',
+                  style: 'solid',
+                  radius: 12
+                },
+                shadow: {
+                  enabled: true,
+                  x: 0,
+                  y: 4,
+                  blur: 16,
+                  color: '#000000',
+                  opacity: 0.08
+                },
+                pattern: { enabled: false, type: 'dots', color: '#f3f4f6', opacity: 0.3, size: 20 },
+                frame: { enabled: false, type: 'simple', color: '#374151', width: 8 }
+              });
+            }}
+            className="flex items-center justify-center space-x-2 py-2.5 px-3 bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-[1.02] text-sm"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="font-medium">默认背景</span>
           </button>
         </div>
+        <p className="text-xs text-slate-500 text-center">随机背景：自动生成多样化效果｜默认背景：固定的优雅浅色搭配</p>
+      </div>
 
-        {isExpanded && (
-          <>
             {/* 美化主题预设 */}
             <div className="space-y-3">
-              <label className="block text-xs font-medium text-gray-600">一键美化主题</label>
+        <label className="block text-xs font-medium text-slate-600">主题预设</label>
               <div className="grid grid-cols-1 gap-2">
                 {beautifyThemes.map((theme) => (
                   <button
@@ -669,9 +693,6 @@ export function BackgroundPanel({ className = '' }: BackgroundPanelProps) {
                 )}
               </div>
             )}
-          </>
-        )}
-      </div>
     </div>
   );
 } 

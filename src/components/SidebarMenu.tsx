@@ -71,10 +71,10 @@ const menuItems: MenuItem[] = [
 
 export function SidebarMenu({ activeTab, onTabChange }: SidebarMenuProps) {
   return (
-    <div className="w-16 bg-gray-900 flex flex-col items-center py-4 space-y-2">
+    <div className="w-16 bg-slate-800 flex flex-col items-center py-4 space-y-1 border-r border-slate-700/50">
       {/* Logo */}
-      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
-        <FileText className="w-6 h-6 text-white" />
+      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 shadow-lg">
+        <FileText className="w-5 h-5 text-white" />
       </div>
       
       {/* Menu Items */}
@@ -87,44 +87,49 @@ export function SidebarMenu({ activeTab, onTabChange }: SidebarMenuProps) {
             key={item.id}
             onClick={() => onTabChange(item.id)}
             className={`
-              relative w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200
+              relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ease-out
               ${isActive 
-                ? 'bg-blue-600 text-white shadow-lg' 
-                : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 scale-105' 
+                : 'text-slate-400 hover:text-white hover:bg-slate-700/80 hover:scale-105'
               }
               group
             `}
             title={item.description}
           >
-            <Icon className="w-5 h-5" />
+            <Icon className="w-4.5 h-4.5" />
             
             {/* Active indicator */}
             {isActive && (
-              <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-blue-400 rounded-full" />
+              <div className="absolute -right-0.5 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-indigo-400 rounded-full shadow-sm" />
             )}
             
             {/* Tooltip */}
-            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-              {item.label}
-              <div className="text-gray-300 text-xs">{item.description}</div>
+            <div className="absolute left-full ml-3 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">
+              <div className="font-medium">{item.label}</div>
+              <div className="text-slate-300 text-xs mt-0.5">{item.description}</div>
+              {/* Tooltip arrow */}
+              <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-900"></div>
             </div>
           </button>
         );
       })}
       
       {/* Divider */}
-      <div className="w-8 h-px bg-gray-700 my-4" />
+      <div className="w-6 h-px bg-slate-600/50 my-4" />
       
       {/* Settings */}
       <button
-        className="w-12 h-12 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800 transition-all duration-200 group"
+        className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700/80 hover:scale-105 transition-all duration-300 ease-out group"
         title="设置"
       >
-        <Settings className="w-5 h-5" />
+        <Settings className="w-4.5 h-4.5" />
         
         {/* Tooltip */}
-        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-          设置
+        <div className="absolute left-full ml-3 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">
+          <div className="font-medium">设置</div>
+          <div className="text-slate-300 text-xs mt-0.5">应用设置和偏好</div>
+          {/* Tooltip arrow */}
+          <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-900"></div>
         </div>
       </button>
     </div>

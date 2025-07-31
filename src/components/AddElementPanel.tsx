@@ -157,24 +157,24 @@ export function AddElementPanel({ className = '' }: AddElementPanelProps) {
   ];
 
   return (
-    <div className={`p-4 space-y-4 ${className}`}>
+    <div className={`p-5 space-y-5 ${className}`}>
       {/* Element Types Grid */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         {elementTypes.map((item) => {
           const IconComponent = item.icon;
           return (
             <button
               key={`${item.type}-${item.level || 'default'}`}
               onClick={() => handleAddElement(item.type, item.level)}
-              className="p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-left group"
+              className="p-4 border border-slate-200/80 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/50 transition-all duration-200 text-left group hover:shadow-sm"
             >
-              <div className="flex items-center space-x-2 mb-1">
-                <IconComponent className="w-4 h-4 text-gray-600 group-hover:text-blue-600" />
-                <span className="text-sm font-medium text-gray-800 group-hover:text-blue-800">
+              <div className="flex items-center space-x-2 mb-2">
+                <IconComponent className="w-4 h-4 text-slate-600 group-hover:text-indigo-600 transition-colors" />
+                <span className="text-sm font-semibold text-slate-800 group-hover:text-indigo-800">
                   {item.label}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 group-hover:text-blue-600">
+              <p className="text-xs text-slate-500 group-hover:text-indigo-600 leading-relaxed">
                 {item.description}
               </p>
             </button>
@@ -183,16 +183,28 @@ export function AddElementPanel({ className = '' }: AddElementPanelProps) {
       </div>
 
       {/* Quick Add Tips */}
-      <div className="text-xs text-gray-500 bg-gray-50 rounded p-3">
-        <div className="flex items-center space-x-1 mb-1">
-          <Plus className="w-3 h-3" />
-          <span className="font-medium">快速添加提示：</span>
+      <div className="text-xs bg-slate-50/80 rounded-xl p-4 border border-slate-200/60">
+        <div className="flex items-center space-x-2 mb-3">
+          <Plus className="w-3.5 h-3.5 text-indigo-600" />
+          <span className="font-semibold text-slate-700">快速添加提示</span>
         </div>
-        <ul className="space-y-1 ml-4">
-          <li>• 新元素将添加到画布中心位置</li>
-          <li>• 双击元素可直接编辑，支持多行文本</li>
-          <li>• Enter换行，Ctrl+Enter保存，Esc取消</li>
-          <li>• 拖拽元素可调整位置和大小</li>
+        <ul className="space-y-2 text-slate-600">
+          <li className="flex items-start space-x-2">
+            <span className="text-indigo-400 mt-0.5">•</span>
+            <span>新元素将添加到画布中心位置</span>
+          </li>
+          <li className="flex items-start space-x-2">
+            <span className="text-indigo-400 mt-0.5">•</span>
+            <span>双击元素可直接编辑，支持多行文本</span>
+          </li>
+          <li className="flex items-start space-x-2">
+            <span className="text-indigo-400 mt-0.5">•</span>
+            <span>Enter换行，Ctrl+Enter保存，Esc取消</span>
+          </li>
+          <li className="flex items-start space-x-2">
+            <span className="text-indigo-400 mt-0.5">•</span>
+            <span>拖拽元素可调整位置和大小</span>
+          </li>
         </ul>
       </div>
     </div>

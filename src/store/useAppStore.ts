@@ -104,6 +104,7 @@ interface AppState {
   // Background settings
   backgroundSettings: BackgroundSettings;
   updateBackgroundSettings: (updates: Partial<BackgroundSettings>) => void;
+  generateRandomBackground: () => void;
   
   // Pages
   currentPage: number;
@@ -143,26 +144,120 @@ const defaultStyleSettings: StyleSettings = {
   boldColor: '#7c3aed', // 保持紫色
 };
 
+// 生成随机背景设置的函数
+function generateRandomBackgroundSettings(): BackgroundSettings {
+  const gradientPresets = [
+    // 清新淡雅系列
+    ['#f0f9ff', '#e0e7ff'], // 蓝色渐变
+    ['#f0fdf4', '#dcfce7'], // 绿色渐变
+    ['#fef7f0', '#fed7aa'], // 橙色渐变
+    ['#fdf4ff', '#f3e8ff'], // 紫色渐变
+    ['#f0fdfa', '#ccfbf1'], // 青色渐变
+    ['#fffbeb', '#fef3c7'], // 黄色渐变
+    ['#fdf2f8', '#fce7f3'], // 粉色渐变
+    
+    // 现代深色系列
+    ['#1e293b', '#334155'], // 深蓝灰
+    ['#1f2937', '#374151'], // 深灰
+    ['#064e3b', '#065f46'], // 深绿
+    ['#581c87', '#7c2d8e'], // 深紫
+    
+    // 渐变对比系列
+    ['#667eea', '#764ba2'], // 蓝紫渐变
+    ['#f093fb', '#f5576c'], // 粉红渐变
+    ['#4facfe', '#00f2fe'], // 蓝青渐变
+    ['#43e97b', '#38f9d7'], // 绿青渐变
+    ['#fa709a', '#fee140'], // 粉黄渐变
+  ];
+  
+  const directions = [
+    'to bottom',
+    'to top',
+    'to right',
+    'to left',
+    'to bottom right',
+    'to bottom left',
+    'to top right',
+    'to top left'
+  ];
+  
+  const borderColors = [
+    '#e2e8f0', '#cbd5e1', '#94a3b8',
+    '#ddd6fe', '#c4b5fd', '#a78bfa',
+    '#fde68a', '#fcd34d', '#f59e0b',
+    '#fed7d7', '#fca5a5', '#f87171',
+    '#bbf7d0', '#86efac', '#4ade80'
+  ];
+  
+  const frameTypes: Array<'simple' | 'elegant' | 'modern' | 'vintage'> = ['simple', 'elegant', 'modern', 'vintage'];
+  
+  // 随机选择渐变色彩
+  const selectedGradient = gradientPresets[Math.floor(Math.random() * gradientPresets.length)];
+  const selectedDirection = directions[Math.floor(Math.random() * directions.length)];
+  const selectedBorderColor = borderColors[Math.floor(Math.random() * borderColors.length)];
+  const selectedFrameType = frameTypes[Math.floor(Math.random() * frameTypes.length)];
+  
+  // 80% 概率使用渐变，20% 概率使用纯色
+  const useGradient = Math.random() > 0.2;
+  
+  return {
+    type: useGradient ? 'gradient' : 'solid',
+    solidColor: useGradient ? '#ffffff' : selectedGradient[0],
+    gradientType: 'linear',
+    gradientDirection: selectedDirection,
+    gradientColors: selectedGradient,
+    border: {
+      enabled: Math.random() > 0.3, // 70% 概率启用边框
+      width: Math.floor(Math.random() * 4) + 2, // 2-5px
+      color: selectedBorderColor,
+      style: Math.random() > 0.7 ? 'dashed' : 'solid',
+      radius: Math.floor(Math.random() * 20) + 8 // 8-27px
+    },
+    shadow: {
+      enabled: Math.random() > 0.4, // 60% 概率启用阴影
+      x: Math.floor(Math.random() * 8) - 4, // -4 到 4
+      y: Math.floor(Math.random() * 12) + 2, // 2 到 14
+      blur: Math.floor(Math.random() * 20) + 8, // 8 到 28
+      color: '#000000',
+      opacity: Math.random() * 0.15 + 0.05 // 0.05 到 0.2
+    },
+    pattern: {
+      enabled: Math.random() > 0.7, // 30% 概率启用图案
+      type: ['dots', 'grid', 'diagonal'][Math.floor(Math.random() * 3)] as 'dots' | 'grid' | 'diagonal',
+      color: '#ffffff',
+      opacity: Math.random() * 0.1 + 0.05, // 0.05 到 0.15
+      size: Math.floor(Math.random() * 30) + 15 // 15 到 45
+    },
+    frame: {
+      enabled: Math.random() > 0.6, // 40% 概率启用装饰框
+      type: selectedFrameType,
+      color: selectedBorderColor,
+      width: Math.floor(Math.random() * 8) + 4 // 4 到 12
+    }
+  };
+}
+
+// 固定的美观背景设置 - 浅色背景+深色字体
 const defaultBackgroundSettings: BackgroundSettings = {
-  type: 'solid',
+  type: 'gradient',
   solidColor: '#ffffff',
   gradientType: 'linear',
-  gradientDirection: 'to bottom',
-  gradientColors: ['#f8fafc', '#e2e8f0'],
+  gradientDirection: 'to bottom right',
+  gradientColors: ['#f8fafc', '#f1f5f9'], // 温和的灰白渐变
   border: {
-    enabled: false,
+    enabled: true,
     width: 2,
-    color: '#e5e7eb',
+    color: '#e2e8f0',
     style: 'solid',
-    radius: 8
+    radius: 12
   },
   shadow: {
-    enabled: false,
+    enabled: true,
     x: 0,
     y: 4,
-    blur: 12,
+    blur: 16,
     color: '#000000',
-    opacity: 0.1
+    opacity: 0.08
   },
   pattern: {
     enabled: false,
@@ -252,6 +347,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateBackgroundSettings: (updates) => set(state => ({
     backgroundSettings: { ...state.backgroundSettings, ...updates }
   })),
+  generateRandomBackground: () => set({
+    backgroundSettings: generateRandomBackgroundSettings()
+  }),
   
   // Pages
   currentPage: 1,

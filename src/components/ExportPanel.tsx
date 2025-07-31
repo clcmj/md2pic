@@ -311,20 +311,40 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
       const mimeType = exportOptions.format === 'png' ? 'image/png' : 
                       exportOptions.format === 'jpeg' ? 'image/jpeg' : 'image/webp';
       
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-          const filename = `md2pic-page${currentPage}-${timestamp}.${exportOptions.format}`;
+      // 使用 Promise 来处理 toBlob 的异步操作
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, mimeType, exportOptions.quality);
+      });
+      
+      if (blob) {
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `md2pic-page${currentPage}-${timestamp}.${exportOptions.format}`;
+        
+        // 防止页面跳转，确保在当前页面下载
+        try {
           saveAs(blob, filename);
           toast.success(`图片已导出: ${filename}`);
-        } else {
-          toast.error('图片生成失败');
+        } catch (downloadError) {
+          console.error('Download failed:', downloadError);
+          // 如果 saveAs 失败，尝试手动创建下载链接
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          toast.success(`图片已导出: ${filename}`);
         }
-      }, mimeType, exportOptions.quality);
+      } else {
+        toast.error('图片生成失败');
+      }
       
     } catch (error) {
       console.error('Export failed:', error);
-      toast.error('导出失败，请重试');
+      toast.error(`导出失败: ${error.message || '未知错误'}`);
     } finally {
       setIsExporting(false);
     }
@@ -408,47 +428,38 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
     setExportOptions(prev => ({ ...prev, format }));
     
     // Wait for next tick to ensure state update
-    setTimeout(() => {
-      handleSingleExport();
-      // Restore original format
-      setExportOptions(prev => ({ ...prev, format: originalFormat }));
+    setTimeout(async () => {
+      try {
+        await handleSingleExport();
+      } catch (error) {
+        console.error('Quick export failed:', error);
+      } finally {
+        // Restore original format
+        setExportOptions(prev => ({ ...prev, format: originalFormat }));
+      }
     }, 10);
   }, [exportOptions.format, handleSingleExport]);
 
   return (
-    <div className={`bg-white border-b border-gray-200 ${className}`}>
-      <div className="p-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Download className="w-5 h-5 text-green-600" />
-            <h3 className="text-sm font-medium text-gray-700">图片导出</h3>
-          </div>
-          <div className="flex items-center space-x-1">
-            <button
-              onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-              className="p-1 rounded hover:bg-gray-100"
-              title="高级选项"
-            >
-              <Settings className="w-4 h-4 text-gray-500" />
-            </button>
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-4 text-gray-600" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
-        </div>
+    <div className={`p-5 space-y-5 ${className}`}>
+      {/* Advanced Options Toggle */}
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium text-slate-700">导出设置</h4>
+        <button
+          onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+          className={`flex items-center space-x-1 px-3 py-1.5 text-xs rounded-lg border transition-all ${
+            showAdvancedOptions
+              ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+          }`}
+        >
+          <Settings className="w-3.5 h-3.5" />
+          <span>高级选项</span>
+        </button>
+      </div>
 
-        {isExpanded && (
-          <>
-            {/* Advanced Options */}
-            {showAdvancedOptions && (
+      {/* Advanced Options */}
+      {showAdvancedOptions && (
           <div className="bg-gray-50 p-3 rounded-lg space-y-3">
             <div className="text-sm font-medium text-gray-700">导出设置</div>
             
@@ -526,7 +537,7 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
           </div>
         )}
 
-        {/* Main Export Buttons */}
+      {/* Main Export Buttons */}
         <div className="space-y-3">
           {/* Single Page Export */}
           <button
@@ -637,9 +648,6 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
             <div>• 高分辨率导出适合印刷和高清显示</div>
           </div>
         </div>
-          </>
-        )}
-      </div>
     </div>
   );
 }
