@@ -101,6 +101,67 @@ export function ExportPanel({ className = '' }: ExportPanelProps) {
       container.style.backgroundColor = backgroundSettings.solidColor || '#ffffff';
     }
     
+    // Apply border settings
+    if (backgroundSettings.border.enabled) {
+      container.style.border = `${backgroundSettings.border.width}px ${backgroundSettings.border.style} ${backgroundSettings.border.color}`;
+      container.style.borderRadius = `${backgroundSettings.border.radius}px`;
+    }
+    
+    // Apply shadow settings
+    if (backgroundSettings.shadow.enabled) {
+      const shadowColor = backgroundSettings.shadow.color + Math.round(backgroundSettings.shadow.opacity * 255).toString(16).padStart(2, '0');
+      container.style.boxShadow = `${backgroundSettings.shadow.x}px ${backgroundSettings.shadow.y}px ${backgroundSettings.shadow.blur}px ${shadowColor}`;
+    }
+    
+    // Apply frame settings
+    if (backgroundSettings.frame.enabled) {
+      switch (backgroundSettings.frame.type) {
+        case 'elegant':
+          container.style.outline = `${backgroundSettings.frame.width}px solid ${backgroundSettings.frame.color}`;
+          container.style.outlineOffset = `${backgroundSettings.frame.width}px`;
+          break;
+        case 'modern':
+          container.style.borderTop = `${backgroundSettings.frame.width * 2}px solid ${backgroundSettings.frame.color}`;
+          container.style.borderLeft = `1px solid ${backgroundSettings.frame.color}`;
+          break;
+        case 'vintage':
+          container.style.border = `${backgroundSettings.frame.width}px double ${backgroundSettings.frame.color}`;
+          break;
+        default: // simple
+          container.style.outline = `${backgroundSettings.frame.width}px solid ${backgroundSettings.frame.color}`;
+      }
+    }
+    
+    // Apply pattern settings
+    if (backgroundSettings.pattern.enabled) {
+      const { type, color, opacity, size } = backgroundSettings.pattern;
+      let patternSvg = '';
+      
+      switch (type) {
+        case 'dots':
+          patternSvg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg"><circle cx="${size/2}" cy="${size/2}" r="2" fill="${color}" fill-opacity="${opacity}"/></svg>`;
+          break;
+        case 'grid':
+          patternSvg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg"><path d="M ${size} 0 L 0 0 0 ${size}" fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="1"/></svg>`;
+          break;
+        case 'diagonal':
+          patternSvg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg"><path d="M 0 ${size} L ${size} 0" stroke="${color}" stroke-opacity="${opacity}" stroke-width="1"/></svg>`;
+          break;
+      }
+      
+      if (patternSvg) {
+        const encodedSvg = encodeURIComponent(patternSvg);
+        const patternDiv = document.createElement('div');
+        patternDiv.style.position = 'absolute';
+        patternDiv.style.inset = '0';
+        patternDiv.style.backgroundImage = `url("data:image/svg+xml,${encodedSvg}")`;
+        patternDiv.style.backgroundRepeat = 'repeat';
+        patternDiv.style.pointerEvents = 'none';
+        patternDiv.style.zIndex = '1';
+        container.appendChild(patternDiv);
+      }
+    }
+    
     document.body.appendChild(container);
     
     try {

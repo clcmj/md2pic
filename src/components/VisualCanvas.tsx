@@ -20,11 +20,25 @@ interface DragState {
   hasMoved?: boolean;
 }
 
+interface AlignmentGuide {
+  type: 'vertical' | 'horizontal';
+  position: number;
+  elements: string[]; // 对齐的元素ID
+  snapDistance: number;
+}
+
+interface SnapResult {
+  x: number;
+  y: number;
+  guides: AlignmentGuide[];
+}
+
 export function VisualCanvas({ className = '' }: VisualCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>('');
+  const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastClickTimeRef = useRef<number>(0);
@@ -105,7 +119,169 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
   // Handle canvas click (deselect)
   const handleCanvasClick = useCallback(() => {
     setSelectedElementId(null);
+    setAlignmentGuides([]); // 清除辅助线
   }, [setSelectedElementId]);
+
+  // 计算对齐辅助线
+  const calculateAlignmentGuides = useCallback((draggedElement: MarkdownElement, otherElements: MarkdownElement[]): AlignmentGuide[] => {
+    const guides: AlignmentGuide[] = [];
+    const snapThreshold = 8; // 8px 磁吸距离
+    
+    // 画布中心线
+    const canvasCenterX = canvasFormat.width / 2;
+    const canvasCenterY = canvasFormat.height / 2;
+    
+    // 被拖拽元素的边界
+    const draggedLeft = draggedElement.x;
+    const draggedRight = draggedElement.x + draggedElement.width;
+    const draggedTop = draggedElement.y;
+    const draggedBottom = draggedElement.y + draggedElement.height;
+    const draggedCenterX = draggedElement.x + draggedElement.width / 2;
+    const draggedCenterY = draggedElement.y + draggedElement.height / 2;
+    
+    // 画布中心对齐
+    if (Math.abs(draggedCenterX - canvasCenterX) <= snapThreshold) {
+      guides.push({
+        type: 'vertical',
+        position: canvasCenterX,
+        elements: ['canvas-center'],
+        snapDistance: Math.abs(draggedCenterX - canvasCenterX)
+      });
+    }
+    
+    if (Math.abs(draggedCenterY - canvasCenterY) <= snapThreshold) {
+      guides.push({
+        type: 'horizontal',
+        position: canvasCenterY,
+        elements: ['canvas-center'],
+        snapDistance: Math.abs(draggedCenterY - canvasCenterY)
+      });
+    }
+    
+    // 与其他元素对齐
+    otherElements.forEach(element => {
+      if (element.id === draggedElement.id) return;
+      
+      const elementLeft = element.x;
+      const elementRight = element.x + element.width;
+      const elementTop = element.y;
+      const elementBottom = element.y + element.height;
+      const elementCenterX = element.x + element.width / 2;
+      const elementCenterY = element.y + element.height / 2;
+      
+      // 垂直对齐（X轴）
+      const verticalAlignments = [
+        { pos: elementLeft, type: 'left-left' },
+        { pos: elementRight, type: 'right-right' },
+        { pos: elementCenterX, type: 'center-center' },
+        { pos: elementLeft, type: 'right-left', dragPos: draggedRight },
+        { pos: elementRight, type: 'left-right', dragPos: draggedLeft }
+      ];
+      
+      verticalAlignments.forEach(({ pos, type, dragPos }) => {
+        const comparePos = dragPos || draggedCenterX;
+        if (type === 'center-center') {
+          if (Math.abs(draggedCenterX - pos) <= snapThreshold) {
+            guides.push({
+              type: 'vertical',
+              position: pos,
+              elements: [element.id],
+              snapDistance: Math.abs(draggedCenterX - pos)
+            });
+          }
+        } else if (Math.abs(comparePos - pos) <= snapThreshold) {
+          guides.push({
+            type: 'vertical',
+            position: pos,
+            elements: [element.id],
+            snapDistance: Math.abs(comparePos - pos)
+          });
+        }
+      });
+      
+      // 水平对齐（Y轴）
+      const horizontalAlignments = [
+        { pos: elementTop, type: 'top-top' },
+        { pos: elementBottom, type: 'bottom-bottom' },
+        { pos: elementCenterY, type: 'center-center' },
+        { pos: elementTop, type: 'bottom-top', dragPos: draggedBottom },
+        { pos: elementBottom, type: 'top-bottom', dragPos: draggedTop }
+      ];
+      
+      horizontalAlignments.forEach(({ pos, type, dragPos }) => {
+        const comparePos = dragPos || draggedCenterY;
+        if (type === 'center-center') {
+          if (Math.abs(draggedCenterY - pos) <= snapThreshold) {
+            guides.push({
+              type: 'horizontal',
+              position: pos,
+              elements: [element.id],
+              snapDistance: Math.abs(draggedCenterY - pos)
+            });
+          }
+        } else if (Math.abs(comparePos - pos) <= snapThreshold) {
+          guides.push({
+            type: 'horizontal',
+            position: pos,
+            elements: [element.id],
+            snapDistance: Math.abs(comparePos - pos)
+          });
+        }
+      });
+    });
+    
+    // 按距离排序，优先选择最近的辅助线
+    return guides.sort((a, b) => a.snapDistance - b.snapDistance);
+  }, [canvasFormat.width, canvasFormat.height]);
+
+  // 应用磁吸对齐
+  const applySnapping = useCallback((element: MarkdownElement, otherElements: MarkdownElement[]): SnapResult => {
+    const guides = calculateAlignmentGuides(element, otherElements);
+    let snappedX = element.x;
+    let snappedY = element.y;
+    const activeGuides: AlignmentGuide[] = [];
+    const snapThreshold = 8;
+    
+    // 画布中心线
+    const canvasCenterX = canvasFormat.width / 2;
+    const canvasCenterY = canvasFormat.height / 2;
+    
+    // 应用垂直对齐（X轴）
+    const verticalGuide = guides.find(g => g.type === 'vertical');
+    if (verticalGuide) {
+      if (verticalGuide.elements.includes('canvas-center')) {
+        // 画布中心对齐
+        snappedX = canvasCenterX - element.width / 2;
+      } else {
+        // 与其他元素对齐，默认使用中心对齐
+        snappedX = verticalGuide.position - element.width / 2;
+      }
+      activeGuides.push(verticalGuide);
+    }
+    
+    // 应用水平对齐（Y轴）
+    const horizontalGuide = guides.find(g => g.type === 'horizontal');
+    if (horizontalGuide) {
+      if (horizontalGuide.elements.includes('canvas-center')) {
+        // 画布中心对齐
+        snappedY = canvasCenterY - element.height / 2;
+      } else {
+        // 与其他元素对齐，默认使用中心对齐
+        snappedY = horizontalGuide.position - element.height / 2;
+      }
+      activeGuides.push(horizontalGuide);
+    }
+    
+    // 边界检查，确保元素不会移动到画布外
+    snappedX = Math.max(0, Math.min(canvasFormat.width - element.width, snappedX));
+    snappedY = Math.max(0, Math.min(canvasFormat.height - element.height, snappedY));
+    
+    return {
+      x: snappedX,
+      y: snappedY,
+      guides: activeGuides
+    };
+  }, [calculateAlignmentGuides, canvasFormat.width, canvasFormat.height]);
 
   // Handle drag start
   const handleMouseDown = useCallback((e: React.MouseEvent, elementId: string, dragType: 'move' | 'resize', resizeHandle?: string) => {
@@ -157,10 +333,37 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
     }
     
     if (dragState.dragType === 'move') {
+      const newX = Math.max(0, dragState.startElementX + deltaX);
+      const newY = Math.max(0, dragState.startElementY + deltaY);
+      
+      // 获取当前元素信息用于对齐计算
+      const currentElement = currentPageElements.find(el => el.id === selectedElementId);
+      if (currentElement) {
+        const tempElement = {
+          ...currentElement,
+          x: newX,
+          y: newY
+        };
+        
+        // 计算对齐辅助线和磁吸
+        const otherElements = currentPageElements.filter(el => el.id !== selectedElementId);
+        const snapResult = applySnapping(tempElement, otherElements);
+        
+        // 更新元素位置（应用磁吸后的位置）
+        updateCurrentPageElement(selectedElementId, {
+          x: Math.max(0, Math.min(canvasFormat.width - currentElement.width, snapResult.x)),
+          y: Math.max(0, Math.min(canvasFormat.height - currentElement.height, snapResult.y))
+        });
+        
+        // 更新辅助线
+        setAlignmentGuides(snapResult.guides);
+      } else {
+        // 如果没有找到元素，使用原始逻辑
       updateCurrentPageElement(selectedElementId, {
-        x: Math.max(0, dragState.startElementX + deltaX),
-        y: Math.max(0, dragState.startElementY + deltaY)
+          x: Math.max(0, newX),
+          y: Math.max(0, newY)
       });
+      }
     } else if (dragState.dragType === 'resize') {
       const updates: Partial<MarkdownElement> = {};
       
@@ -203,7 +406,7 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
       
       updateCurrentPageElement(selectedElementId, updates);
     }
-  }, [dragState, selectedElementId, canvasScale, updateCurrentPageElement]);
+  }, [dragState, selectedElementId, canvasScale, updateCurrentPageElement, currentPageElements, applySnapping, canvasFormat.width, canvasFormat.height]);
 
   // Handle drag end
   const handleMouseUp = useCallback(() => {
@@ -215,6 +418,7 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
       }
     }
     setDragState(null);
+    setAlignmentGuides([]); // 清除辅助线
   }, [dragState]);
 
   // Handle delete
@@ -403,14 +607,93 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
 
   // Generate background style based on settings
   const getCanvasBackgroundStyle = () => {
+    const style: React.CSSProperties = {};
+    
+    // 基础背景
     if (backgroundSettings.type === 'gradient') {
-      return {
-        background: `linear-gradient(${backgroundSettings.gradientDirection}, ${backgroundSettings.gradientColors?.join(', ') || '#ffffff, #f0f0f0'})`
-      };
+      style.background = `linear-gradient(${backgroundSettings.gradientDirection}, ${backgroundSettings.gradientColors?.join(', ') || '#ffffff, #f0f0f0'})`;
+    } else {
+      style.backgroundColor = backgroundSettings.solidColor || '#ffffff';
     }
-    return {
-      backgroundColor: backgroundSettings.solidColor || '#ffffff'
-    };
+    
+    // 边框
+    if (backgroundSettings.border.enabled) {
+      style.border = `${backgroundSettings.border.width}px ${backgroundSettings.border.style} ${backgroundSettings.border.color}`;
+      style.borderRadius = `${backgroundSettings.border.radius}px`;
+    }
+    
+    // 阴影
+    if (backgroundSettings.shadow.enabled) {
+      const shadowColor = backgroundSettings.shadow.color + Math.round(backgroundSettings.shadow.opacity * 255).toString(16).padStart(2, '0');
+      style.boxShadow = `${backgroundSettings.shadow.x}px ${backgroundSettings.shadow.y}px ${backgroundSettings.shadow.blur}px ${shadowColor}`;
+    }
+    
+    // 相框效果
+    if (backgroundSettings.frame.enabled) {
+      switch (backgroundSettings.frame.type) {
+        case 'elegant':
+          style.outline = `${backgroundSettings.frame.width}px solid ${backgroundSettings.frame.color}`;
+          style.outlineOffset = `${backgroundSettings.frame.width}px`;
+          break;
+        case 'modern':
+          style.borderTop = `${backgroundSettings.frame.width * 2}px solid ${backgroundSettings.frame.color}`;
+          style.borderLeft = `1px solid ${backgroundSettings.frame.color}`;
+          break;
+        case 'vintage':
+          style.border = `${backgroundSettings.frame.width}px double ${backgroundSettings.frame.color}`;
+          break;
+        default: // simple
+          style.outline = `${backgroundSettings.frame.width}px solid ${backgroundSettings.frame.color}`;
+      }
+    }
+    
+    return style;
+  };
+
+  // Generate pattern overlay
+  const getPatternOverlay = () => {
+    if (!backgroundSettings.pattern.enabled) return null;
+    
+    const { type, color, opacity, size } = backgroundSettings.pattern;
+    const patternOpacity = opacity;
+    
+    let patternSvg = '';
+    switch (type) {
+      case 'dots':
+        patternSvg = `
+          <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="${size/2}" cy="${size/2}" r="2" fill="${color}" fill-opacity="${patternOpacity}"/>
+          </svg>
+        `;
+        break;
+      case 'grid':
+        patternSvg = `
+          <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+            <path d="M ${size} 0 L 0 0 0 ${size}" fill="none" stroke="${color}" stroke-opacity="${patternOpacity}" stroke-width="1"/>
+          </svg>
+        `;
+        break;
+      case 'diagonal':
+        patternSvg = `
+          <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 0 ${size} L ${size} 0" stroke="${color}" stroke-opacity="${patternOpacity}" stroke-width="1"/>
+          </svg>
+        `;
+        break;
+    }
+    
+    const encodedSvg = encodeURIComponent(patternSvg);
+    
+    return (
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,${encodedSvg}")`,
+          backgroundRepeat: 'repeat',
+          zIndex: 1
+        }}
+      />
+    );
   };
 
   const renderElement = (element: MarkdownElement) => {
@@ -613,8 +896,59 @@ export function VisualCanvas({ className = '' }: VisualCanvasProps) {
           }}
         />
         
+        {/* Pattern overlay */}
+        {getPatternOverlay()}
+        
         {/* Elements */}
         {currentPageElements.map(renderElement)}
+        
+        {/* Alignment guides */}
+        {alignmentGuides.map((guide, index) => (
+          <div
+            key={`guide-${index}`}
+            className="absolute pointer-events-none alignment-guide"
+            style={{
+              ...(guide.type === 'vertical' ? {
+                left: guide.position,
+                top: 0,
+                width: '2px',
+                height: '100%',
+                background: 'linear-gradient(to bottom, transparent 10%, #3b82f6 10%, #3b82f6 90%, transparent 90%)',
+                backgroundSize: '100% 20px',
+              } : {
+                left: 0,
+                top: guide.position,
+                width: '100%',
+                height: '2px',
+                background: 'linear-gradient(to right, transparent 10%, #3b82f6 10%, #3b82f6 90%, transparent 90%)',
+                backgroundSize: '20px 100%',
+              }),
+              zIndex: 1000,
+            }}
+          >
+            {/* Guide label */}
+            <div 
+              className="absolute bg-blue-500 text-white px-1 py-0.5 rounded text-xs font-medium shadow-sm"
+              style={{
+                ...(guide.type === 'vertical' ? {
+                  left: '4px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                } : {
+                  left: '50%',
+                  top: '4px',
+                  transform: 'translateX(-50%)',
+                }),
+                fontSize: '10px',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {guide.elements.includes('canvas-center') 
+                ? (guide.type === 'vertical' ? '中心线' : '中心线')
+                : '对齐'}
+            </div>
+          </div>
+        ))}
         
         {/* Canvas info */}
         <div className="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">

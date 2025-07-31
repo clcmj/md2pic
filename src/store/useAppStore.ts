@@ -33,6 +33,35 @@ interface BackgroundSettings {
   gradientType: 'linear' | 'radial';
   gradientDirection: string;
   gradientColors: string[];
+  // 美化选项
+  border: {
+    enabled: boolean;
+    width: number;
+    color: string;
+    style: 'solid' | 'dashed' | 'dotted';
+    radius: number;
+  };
+  shadow: {
+    enabled: boolean;
+    x: number;
+    y: number;
+    blur: number;
+    color: string;
+    opacity: number;
+  };
+  pattern: {
+    enabled: boolean;
+    type: 'dots' | 'grid' | 'diagonal' | 'none';
+    color: string;
+    opacity: number;
+    size: number;
+  };
+  frame: {
+    enabled: boolean;
+    type: 'simple' | 'elegant' | 'modern' | 'vintage';
+    color: string;
+    width: number;
+  };
 }
 
 interface StyleSettings {
@@ -119,7 +148,35 @@ const defaultBackgroundSettings: BackgroundSettings = {
   solidColor: '#ffffff',
   gradientType: 'linear',
   gradientDirection: 'to bottom',
-  gradientColors: ['#f8fafc', '#e2e8f0']
+  gradientColors: ['#f8fafc', '#e2e8f0'],
+  border: {
+    enabled: false,
+    width: 2,
+    color: '#e5e7eb',
+    style: 'solid',
+    radius: 8
+  },
+  shadow: {
+    enabled: false,
+    x: 0,
+    y: 4,
+    blur: 12,
+    color: '#000000',
+    opacity: 0.1
+  },
+  pattern: {
+    enabled: false,
+    type: 'dots',
+    color: '#f3f4f6',
+    opacity: 0.3,
+    size: 20
+  },
+  frame: {
+    enabled: false,
+    type: 'simple',
+    color: '#374151',
+    width: 8
+  }
 };
 
 export const useAppStore = create<AppState>((set, get) => ({

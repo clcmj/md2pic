@@ -12,3 +12,43 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* 对齐辅助线动画 */
+@keyframes guidePulse {
+  0% {
+    opacity: 0.6;
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+  }
+  100% {
+    opacity: 0.6;
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+}
+
+.alignment-guide {
+  animation: guidePulse 1.5s ease-in-out infinite;
+}
+
+/* 磁吸提示动画 */
+@keyframes snapIndicator {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.snap-indicator {
+  animation: snapIndicator 0.2s ease-out;
+}
