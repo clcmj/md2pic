@@ -75,7 +75,43 @@ interface StyleSettings {
   boldColor: string;
 }
 
-interface AppState {
+// AI对话相关接口
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: number;
+}
+
+interface AIConfig {
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+  enabled: boolean;
+}
+
+interface AIState {
+  // AI配置
+  aiConfig: AIConfig;
+  updateAIConfig: (config: Partial<AIConfig>) => void;
+  
+  // 对话历史
+  chatMessages: ChatMessage[];
+  addChatMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
+  clearChatHistory: () => void;
+  
+  // 对话状态
+  isAILoading: boolean;
+  setIsAILoading: (loading: boolean) => void;
+  aiError: string | null;
+  setAIError: (error: string | null) => void;
+  
+  // AI对话功能
+  sendMessageToAI: (message: string) => Promise<void>;
+  insertAIContentToMarkdown: (content: string, insertMode?: 'append' | 'replace') => void;
+}
+
+interface AppState extends AIState {
   // Markdown content
   markdownContent: string;
   setMarkdownContent: (content: string) => void;
@@ -274,6 +310,14 @@ const defaultBackgroundSettings: BackgroundSettings = {
   }
 };
 
+// 默认AI配置
+const defaultAIConfig: AIConfig = {
+  apiKey: '',
+  baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  model: 'qwen3-coder-plus',
+  enabled: false
+};
+
 export const useAppStore = create<AppState>((set, get) => ({
   // Markdown content
   markdownContent: '# ✨ 超实用工具分享\n\n**Markdown转图片神器**\n\n让你的文字瞬间变美！\n\n## 🔥 核心亮点\n\n**一键生成精美图片**\n\n完美适配小红书尺寸\n\n**拖拽式自由布局**\n\n想怎么排就怎么排\n\n## 💡 使用场景\n\n📚 **学习笔记**\n做出颜值超高的知识卡片\n\n💼 **工作汇报**\n让PPT告别单调文字\n\n🎨 **创意分享**\n把想法变成视觉作品\n\n## 📊 功能对比\n\n| 功能 | 传统方式 | md2pic |\n|------|----------|--------|\n| 制作图片 | 复杂设计软件 | 一键生成 |\n| 文字编辑 | 固定模板 | 自由布局 |\n| 导出质量 | 压缩失真 | 高清无损 |\n\n# 🎯 三步搞定\n\n## 第一步：输入内容\n在左侧编辑你的文字\n\n## 第二步：调整样式\n右侧面板一键美化\n\n## 第三步：导出分享\n高清图片立即下载\n\n**简单到爆！小白也能用！**',
@@ -417,7 +461,93 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
     }
   },
+
+  // AI 相关状态
+  aiConfig: defaultAIConfig,
+  updateAIConfig: (config) => set((state) => ({ 
+    aiConfig: { ...state.aiConfig, ...config } 
+  })),
+  
+  chatMessages: [],
+  addChatMessage: (message) => set((state) => ({
+    chatMessages: [...state.chatMessages, {
+      ...message,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: Date.now()
+    }]
+  })),
+  clearChatHistory: () => set({ chatMessages: [] }),
+  
+  isAILoading: false,
+  setIsAILoading: (loading) => set({ isAILoading: loading }),
+  aiError: null,
+  setAIError: (error) => set({ aiError: error }),
+  
+  // AI对话功能
+  sendMessageToAI: async (message: string) => {
+    const { aiConfig, addChatMessage, setIsAILoading, setAIError } = get();
+    
+    if (!aiConfig.enabled || !aiConfig.apiKey) {
+      setAIError('请先配置AI API Key');
+      return;
+    }
+    
+    try {
+      setIsAILoading(true);
+      setAIError(null);
+      
+      // 添加用户消息
+      addChatMessage({ role: 'user', content: message });
+      
+      // 调用AI API
+      const response = await fetch(`${aiConfig.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${aiConfig.apiKey}`
+        },
+        body: JSON.stringify({
+          model: aiConfig.model,
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant that generates markdown content. Please respond in Chinese and format your response as valid markdown.' },
+            { role: 'user', content: message }
+          ]
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const aiResponse = data.choices?.[0]?.message?.content;
+      
+      if (aiResponse) {
+        // 添加AI回复消息
+        addChatMessage({ role: 'assistant', content: aiResponse });
+      } else {
+        throw new Error('AI响应格式错误');
+      }
+      
+    } catch (error) {
+      console.error('AI API调用错误:', error);
+      setAIError(error instanceof Error ? error.message : '未知错误');
+    } finally {
+      setIsAILoading(false);
+    }
+  },
+  
+  insertAIContentToMarkdown: (content: string, insertMode: 'append' | 'replace' = 'append') => {
+    const { markdownContent, setMarkdownContent } = get();
+    
+    if (insertMode === 'replace') {
+      setMarkdownContent(content);
+    } else {
+      const newContent = markdownContent ? `${markdownContent}\n\n${content}` : content;
+      setMarkdownContent(newContent);
+    }
+  },
 }));
 
 export { defaultCanvasFormats };
-export type { MarkdownElement, CanvasFormat, StyleSettings, BackgroundSettings };
+export type { MarkdownElement, CanvasFormat, StyleSettings, BackgroundSettings, ChatMessage, AIConfig };

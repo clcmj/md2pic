@@ -7,6 +7,7 @@ import { CanvasFormatPanel } from './CanvasFormatPanel';
 import { StylePanel } from './StylePanel';
 import { ExportPanel } from './ExportPanel';
 import { ElementEditPanel } from './ElementEditPanel';
+import { AISettingsPanel } from './AISettingsPanel';
 import { useAppStore } from '../store/useAppStore';
 import { Edit3 } from 'lucide-react';
 
@@ -50,6 +51,11 @@ const tabConfigs: Record<MenuTab, TabConfig> = {
     title: '导出图片',
     icon: Edit3,
     component: ExportPanel
+  },
+  ai: {
+    title: 'AI设置',
+    icon: Edit3,
+    component: AISettingsPanel
   }
 };
 
@@ -84,6 +90,7 @@ export function ControlPanel({ activeTab }: ControlPanelProps) {
               {activeTab === 'format' && '画布尺寸和缩放设置'}
               {activeTab === 'style' && '全局样式和主题配色'}
               {activeTab === 'export' && '高质量图片导出'}
+              {activeTab === 'ai' && 'AI助手配置和模型设置'}
             </div>
           </div>
         </div>

@@ -7,7 +7,8 @@ import {
   Layers, 
   Image,
   Grid,
-  Plus
+  Plus,
+  Bot
 } from 'lucide-react';
 
 export type MenuTab = 
@@ -16,7 +17,8 @@ export type MenuTab =
   | 'background' 
   | 'format' 
   | 'style' 
-  | 'export';
+  | 'export'
+  | 'ai';
 
 interface SidebarMenuProps {
   activeTab: MenuTab;
@@ -66,6 +68,12 @@ const menuItems: MenuItem[] = [
     icon: Download,
     label: '导出',
     description: '图片导出功能'
+  },
+  {
+    id: 'ai',
+    icon: Bot,
+    label: 'AI设置',
+    description: '智能助手配置'
   }
 ];
 
@@ -113,25 +121,7 @@ export function SidebarMenu({ activeTab, onTabChange }: SidebarMenuProps) {
           </button>
         );
       })}
-      
-      {/* Divider */}
-      <div className="w-6 h-px bg-slate-600/50 my-4" />
-      
-      {/* Settings */}
-      <button
-        className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700/80 hover:scale-105 transition-all duration-300 ease-out group"
-        title="设置"
-      >
-        <Settings className="w-4.5 h-4.5" />
-        
-        {/* Tooltip */}
-        <div className="absolute left-full ml-3 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">
-          <div className="font-medium">设置</div>
-          <div className="text-slate-300 text-xs mt-0.5">应用设置和偏好</div>
-          {/* Tooltip arrow */}
-          <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-900"></div>
-        </div>
-      </button>
+
     </div>
   );
 }

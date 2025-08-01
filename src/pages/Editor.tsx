@@ -4,6 +4,7 @@ import { VisualCanvas } from '../components/VisualCanvas';
 import { SidebarMenu, MenuTab } from '../components/SidebarMenu';
 import { ControlPanel } from '../components/ControlPanel';
 import { FloatingAddButton } from '../components/FloatingAddButton';
+import { AIChatPanel } from '../components/AIChatPanel';
 import { useAppStore } from '../store/useAppStore';
 import { parseMarkdownToElements } from '../lib/markdownParser';
 import { FileText, Palette, Settings, Upload, Download } from 'lucide-react';
@@ -156,24 +157,24 @@ export function Editor() {
                 页面 {currentPage} / {totalPages}
               </span>
               <div className="flex space-x-1">
-                <button
-                  onClick={() => {
-                    if (currentPage > 1) setCurrentPage(currentPage - 1);
-                  }}
-                  disabled={currentPage <= 1}
+              <button
+                onClick={() => {
+                  if (currentPage > 1) setCurrentPage(currentPage - 1);
+                }}
+                disabled={currentPage <= 1}
                   className="px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  上一页
-                </button>
-                <button
-                  onClick={() => {
-                    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                  }}
-                  disabled={currentPage >= totalPages}
+              >
+                上一页
+              </button>
+              <button
+                onClick={() => {
+                  if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                }}
+                disabled={currentPage >= totalPages}
                   className="px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  下一页
-                </button>
+              >
+                下一页
+              </button>
               </div>
             </div>
           </div>
@@ -182,48 +183,54 @@ export function Editor() {
           <VisualCanvas className="flex-1 bg-slate-50/30" />
         </div>
 
-        {/* Right Panel - Markdown Editor */}
+                {/* Right Panel - Markdown Editor & AI Chat */}
         <div className="w-1/3 min-w-[300px] max-w-[500px] flex flex-col bg-white">
-          <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-slate-50 to-slate-50/80 border-b border-slate-200/60">
-            <div className="flex items-center space-x-3">
-              <FileText className="w-4 h-4 text-indigo-600" />
-              <div>
-                <span className="text-sm font-semibold text-slate-800">Markdown 编辑器</span>
-                <div className="text-xs text-slate-500">实时编辑和语法高亮</div>
+          {/* Markdown Editor Section */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-slate-50 to-slate-50/80 border-b border-slate-200/60">
+              <div className="flex items-center space-x-3">
+                <FileText className="w-4 h-4 text-indigo-600" />
+                <div>
+                  <span className="text-sm font-semibold text-slate-800">Markdown 编辑器</span>
+                  <div className="text-xs text-slate-500">实时编辑和语法高亮</div>
+                </div>
+              </div>
+              
+              {/* Import/Export Buttons */}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="file"
+                  accept=".md,.markdown"
+                  onChange={handleFileImport}
+                  className="hidden"
+                  id="header-file-input"
+                />
+                <button
+                  onClick={() => {
+                    document.getElementById('header-file-input')?.click();
+                  }}
+                  className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 hover:border-indigo-300 rounded-lg transition-all duration-200 text-xs font-medium"
+                  title="导入文件 (Ctrl+O)"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>导入</span>
+                </button>
+                
+                <button
+                  onClick={handleFileExport}
+                  className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 hover:border-emerald-300 rounded-lg transition-all duration-200 text-xs font-medium"
+                  title="导出文件 (Ctrl+S)"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>导出</span>
+                </button>
               </div>
             </div>
-            
-            {/* Import/Export Buttons */}
-            <div className="flex items-center space-x-2">
-              <input
-                type="file"
-                accept=".md,.markdown"
-                onChange={handleFileImport}
-                className="hidden"
-                id="header-file-input"
-              />
-              <button
-                onClick={() => {
-                  document.getElementById('header-file-input')?.click();
-                }}
-                className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 hover:border-indigo-300 rounded-lg transition-all duration-200 text-xs font-medium"
-                title="导入文件 (Ctrl+O)"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                <span>导入</span>
-              </button>
-              
-              <button
-                onClick={handleFileExport}
-                className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 hover:border-emerald-300 rounded-lg transition-all duration-200 text-xs font-medium"
-                title="导出文件 (Ctrl+S)"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>导出</span>
-              </button>
-            </div>
+            <MarkdownEditor className="flex-1 min-h-0" />
           </div>
-          <MarkdownEditor className="flex-1" />
+          
+          {/* AI Chat Section */}
+          <AIChatPanel className="flex-shrink-0" />
         </div>
       </div>
 
