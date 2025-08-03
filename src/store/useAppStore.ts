@@ -75,14 +75,7 @@ interface StyleSettings {
   boldColor: string;
 }
 
-// AI对话相关接口
-interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: number;
-}
-
+// AI相关接口
 interface AIConfig {
   apiKey: string;
   baseUrl: string;
@@ -95,20 +88,14 @@ interface AIState {
   aiConfig: AIConfig;
   updateAIConfig: (config: Partial<AIConfig>) => void;
   
-  // 对话历史
-  chatMessages: ChatMessage[];
-  addChatMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
-  clearChatHistory: () => void;
-  
-  // 对话状态
+  // AI状态
   isAILoading: boolean;
   setIsAILoading: (loading: boolean) => void;
   aiError: string | null;
   setAIError: (error: string | null) => void;
   
-  // AI对话功能
-  sendMessageToAI: (message: string) => Promise<void>;
-  insertAIContentToMarkdown: (content: string, insertMode?: 'append' | 'replace') => void;
+  // AI功能
+  generateContentWithAI: (prompt: string, insertMode?: 'append' | 'replace') => Promise<void>;
 }
 
 interface AppState extends AIState {
@@ -468,24 +455,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     aiConfig: { ...state.aiConfig, ...config } 
   })),
   
-  chatMessages: [],
-  addChatMessage: (message) => set((state) => ({
-    chatMessages: [...state.chatMessages, {
-      ...message,
-      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: Date.now()
-    }]
-  })),
-  clearChatHistory: () => set({ chatMessages: [] }),
+
   
   isAILoading: false,
   setIsAILoading: (loading) => set({ isAILoading: loading }),
   aiError: null,
   setAIError: (error) => set({ aiError: error }),
   
-  // AI对话功能
-  sendMessageToAI: async (message: string) => {
-    const { aiConfig, addChatMessage, setIsAILoading, setAIError } = get();
+  // AI功能
+  generateContentWithAI: async (prompt: string, insertMode: 'append' | 'replace' = 'append') => {
+    const { aiConfig, setIsAILoading, setAIError, markdownContent, setMarkdownContent } = get();
     
     if (!aiConfig.enabled || !aiConfig.apiKey) {
       setAIError('请先配置AI API Key');
@@ -495,9 +474,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       setIsAILoading(true);
       setAIError(null);
-      
-      // 添加用户消息
-      addChatMessage({ role: 'user', content: message });
       
       // 调用AI API
       const response = await fetch(`${aiConfig.baseUrl}/chat/completions`, {
@@ -509,8 +485,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         body: JSON.stringify({
           model: aiConfig.model,
           messages: [
-            { role: 'system', content: 'You are a helpful assistant that generates markdown content. Please respond in Chinese and format your response as valid markdown.' },
-            { role: 'user', content: message }
+            { role: 'system', content: 'You are a helpful assistant that generates markdown content. Please respond in Chinese and format your response as valid markdown. Only return the markdown content without any explanations. Important guidelines: Keep content under each heading concise and focused - avoid putting too much content under any single heading level. Break down complex topics into multiple smaller sections with appropriate subheadings.' },
+            { role: 'user', content: prompt }
           ]
         })
       });
@@ -523,8 +499,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       const aiResponse = data.choices?.[0]?.message?.content;
       
       if (aiResponse) {
-        // 添加AI回复消息
-        addChatMessage({ role: 'assistant', content: aiResponse });
+        // 直接将AI生成的内容插入到Markdown编辑器
+        if (insertMode === 'replace') {
+          setMarkdownContent(aiResponse);
+        } else {
+          const newContent = markdownContent ? `${markdownContent}\n\n${aiResponse}` : aiResponse;
+          setMarkdownContent(newContent);
+        }
       } else {
         throw new Error('AI响应格式错误');
       }
@@ -536,18 +517,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       setIsAILoading(false);
     }
   },
-  
-  insertAIContentToMarkdown: (content: string, insertMode: 'append' | 'replace' = 'append') => {
-    const { markdownContent, setMarkdownContent } = get();
-    
-    if (insertMode === 'replace') {
-      setMarkdownContent(content);
-    } else {
-      const newContent = markdownContent ? `${markdownContent}\n\n${content}` : content;
-      setMarkdownContent(newContent);
-    }
-  },
 }));
 
 export { defaultCanvasFormats };
-export type { MarkdownElement, CanvasFormat, StyleSettings, BackgroundSettings, ChatMessage, AIConfig };
+export type { MarkdownElement, CanvasFormat, StyleSettings, BackgroundSettings, AIConfig };
